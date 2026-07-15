@@ -26,6 +26,13 @@ type Booking = {
 
 const TIMEZONE = "Asia/Jakarta";
 
+const getCourtImage = (type: string) => {
+  if (type.toUpperCase() === "FUTSAL") {
+    return "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+  }
+  return "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+};
+
 function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -204,198 +211,248 @@ function BookingContent() {
 
       <div className="px-4 sm:px-6 lg:px-8">
         <FilterBar className="-mt-12 mb-10 relative z-20 max-w-7xl mx-auto" />
-        <div className="max-w-7xl mx-auto">
-          {/* Calendar Grid */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="max-w-7xl mx-auto pb-20">
           {loading ? (
-            <div className="p-20 text-center text-gray-500">
-              Memuat jadwal...
+            <div className="flex justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : displayCourts.length === 0 ? (
+            <div className="text-center py-20 text-gray-500 bg-white rounded-2xl shadow-sm border border-gray-100">
+              Tidak ada lapangan yang tersedia.
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr>
-                  <th className="p-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-600 min-w-[100px] sticky left-0 z-10">
-                    Jam
-                  </th>
-                  {displayCourts.map((court) => (
-                    <th
-                      key={court.id}
-                      className="p-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 min-w-[150px]"
-                    >
-                      {court.name}
-                      <div className="text-xs font-normal text-gray-500 mt-1">
-                        Rp {court.pricePerHour.toLocaleString("id-ID")} / jam
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayCourts.map((court) => {
+                const isMaintenance = court.status === "MAINTENANCE";
+                return (
+                  <div key={court.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col">
+                    {/* Hero Image */}
+                    <div className="relative h-48 w-full overflow-hidden">
+                      <img 
+                        src={getCourtImage(court.type)} 
+                        alt={court.name}
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
+                      
+                      <div className="absolute top-4 right-4">
+                        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">
+                          {court.type}
+                        </span>
                       </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {hours.map((hour) => (
-                  <tr key={hour} className="group">
-                    <td className="p-4 border-b border-gray-100 font-medium text-gray-500 sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r">
-                      {hour}
-                    </td>
-                    {displayCourts.map((court) => {
-                      const status = getSlotStatus(court.id, hour);
-
-                      let bgClass = "bg-white";
-                      let textClass = "text-gray-400";
-                      let label = "";
-                      let cursor = "cursor-default";
-
-                      if (status === "PAST") {
-                        bgClass = "bg-gray-100";
-                        textClass = "text-gray-400 line-through";
-                        label = "Lewat";
-                      } else if (status === "MAINTENANCE") {
-                        bgClass = "bg-orange-50";
-                        textClass = "text-orange-600";
-                        label = "Perawatan";
-                      } else if (status === "BOOKED") {
-                        bgClass = "bg-red-50";
-                        textClass = "text-red-600";
-                        label = "Dipesan";
-                      } else if (status === "AVAILABLE") {
-                        bgClass =
-                          "bg-green-50 hover:bg-green-100 transition-colors";
-                        textClass = "text-green-700 font-medium";
-                        label = "Tersedia";
-                        cursor = "cursor-pointer";
-                      }
-
-                      return (
-                        <td
-                          key={`${court.id}-${hour}`}
-                          className={`p-3 border-b border-gray-100 border-l border-r border-dashed border-gray-200 ${bgClass} ${cursor}`}
-                          onClick={() => handleSlotClick(court, hour)}
-                        >
-                          <div className={`text-sm text-center ${textClass}`}>
-                            {label}
+                      
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-xl font-bold text-white mb-1">{court.name}</h3>
+                        <div className="text-gray-300 text-sm font-medium">
+                          Rp {court.pricePerHour.toLocaleString("id-ID")} <span className="font-normal text-gray-400">/ jam</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Time Slots */}
+                    <div className="p-5 flex-1">
+                      <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Pilih Jam Main
+                      </h4>
+                      
+                      {isMaintenance ? (
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3">
+                          <svg className="w-6 h-6 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <div>
+                            <div className="font-semibold text-orange-800 text-sm">Sedang Perawatan</div>
+                            <div className="text-xs text-orange-600 mt-0.5">Lapangan tidak dapat dipesan.</div>
                           </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2">
+                          {hours.map((hour) => {
+                            const status = getSlotStatus(court.id, hour);
+                            
+                            let btnStyle = "";
+                            let label = "";
+                            
+                            if (status === "AVAILABLE") {
+                              btnStyle = "border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:border-blue-400 cursor-pointer shadow-sm";
+                              label = "Kosong";
+                            } else if (status === "BOOKED") {
+                              btnStyle = "bg-red-50 text-red-500 border-red-200 opacity-70 cursor-not-allowed";
+                              label = "Penuh";
+                            } else if (status === "PAST") {
+                              btnStyle = "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through";
+                              label = "Lewat";
+                            }
+                            
+                            return (
+                              <button
+                                key={`${court.id}-${hour}`}
+                                disabled={status !== "AVAILABLE"}
+                                onClick={() => handleSlotClick(court, hour)}
+                                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all duration-200 ${btnStyle}`}
+                              >
+                                <span className="font-bold text-sm">{hour}</span>
+                                <span className="text-[10px] uppercase font-medium mt-0.5">{label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
-      </div>
 
       {/* Booking Modal */}
       {selectedSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <h3 className="text-xl font-bold text-gray-900">
-                Konfirmasi Booking
+                Detail Pemesanan
               </h3>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {message && (
-                <div
-                  className={`p-3 rounded-lg text-sm ${message.type === "error" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}
-                >
-                  {message.text}
-                </div>
-              )}
-
-              <div className="flex justify-between pb-3 border-b border-gray-100">
-                <span className="text-gray-500">Lapangan</span>
-                <span className="font-semibold text-gray-900">
-                  {selectedSlot.court.name}
-                </span>
-              </div>
-              <div className="flex justify-between pb-3 border-b border-gray-100">
-                <span className="text-gray-500">Tanggal</span>
-                <span className="font-semibold text-gray-900">
-                  {format(parseISO(selectedDate), "dd MMMM yyyy")}
-                </span>
-              </div>
-              <div className="flex justify-between pb-3 border-b border-gray-100">
-                <span className="text-gray-500">Waktu</span>
-                <span className="font-semibold text-gray-900">
-                  {selectedSlot.time} -{" "}
-                  {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
-                </span>
-              </div>
-              <div className="flex justify-between pb-3 border-b border-gray-100">
-                <span className="text-gray-500">Total Harga</span>
-                <span className="font-bold text-gray-700">
-                  Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
-                </span>
-              </div>
-              
-              <div className="pt-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Metode Pembayaran</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("DP_50")}
-                    className={`border p-3 rounded-lg text-left transition-colors ${paymentType === "DP_50" ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-gray-200 hover:border-blue-300"}`}
-                  >
-                    <div className="font-medium text-gray-900 text-sm">DP 50%</div>
-                    <div className="text-xs text-gray-500 mt-1">Sisa bayar di lokasi</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("FULL_100")}
-                    className={`border p-3 rounded-lg text-left transition-colors ${paymentType === "FULL_100" ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-gray-200 hover:border-blue-300"}`}
-                  >
-                    <div className="font-medium text-gray-900 text-sm">Lunas 100%</div>
-                    <div className="text-xs text-gray-500 mt-1">Bayar penuh sekarang</div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 bg-gray-50 px-4 rounded-lg border border-gray-100">
-                <span className="text-gray-600 font-medium">Nominal Dibayar</span>
-                <span className="font-bold text-blue-600 text-xl">
-                  Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
-                </span>
-              </div>
-
-              <div className="flex justify-center py-4 border-y border-gray-100">
-                <div className="text-center">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SIMULASI_QRIS_SM_SPORT_${selectedSlot.court.id}`} 
-                    alt="QRIS Simulation" 
-                    className="mx-auto border p-2 rounded-lg bg-white mb-2 shadow-sm"
-                  />
-                  <div className="text-xs text-gray-500 font-mono">SIMULASI QRIS SM SPORT CENTER</div>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="p-6 bg-gray-50 flex gap-3">
-              <button
+              <button 
                 onClick={() => {
                   setSelectedSlot(null);
                   setMessage(null);
                 }}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
-                disabled={isBooking}
+                className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
               >
-                Batal
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-5">
+              {message && (
+                <div className={`p-4 rounded-xl text-sm font-medium flex items-start gap-3 ${message.type === "error" ? "bg-red-50 text-red-700 border border-red-100" : "bg-green-50 text-green-700 border border-green-100"}`}>
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {message.type === "error" 
+                      ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    }
+                  </svg>
+                  {message.text}
+                </div>
+              )}
+
+              {/* Order Info Card */}
+              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm font-medium">Lapangan</span>
+                  <span className="font-bold text-gray-900">{selectedSlot.court.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm font-medium">Tanggal</span>
+                  <span className="font-bold text-gray-900">{format(parseISO(selectedDate), "dd MMMM yyyy")}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm font-medium">Waktu</span>
+                  <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm">
+                    {selectedSlot.time} - {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
+                  </span>
+                </div>
+                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                  <span className="text-gray-500 text-sm font-medium">Harga Normal</span>
+                  <span className="font-bold text-gray-900">
+                    Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-3">Metode Pembayaran</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("DP_50")}
+                    className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
+                      paymentType === "DP_50" 
+                        ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
+                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {paymentType === "DP_50" && (
+                      <div className="absolute top-2 right-2">
+                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                    <div className="font-bold text-gray-900 text-sm">DP 50%</div>
+                    <div className="text-[11px] text-gray-500 mt-1 leading-snug">Sisa dilunasi di lokasi</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("FULL_100")}
+                    className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
+                      paymentType === "FULL_100" 
+                        ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
+                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {paymentType === "FULL_100" && (
+                      <div className="absolute top-2 right-2">
+                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                    <div className="font-bold text-gray-900 text-sm">Lunas 100%</div>
+                    <div className="text-[11px] text-gray-500 mt-1 leading-snug">Bayar penuh sekarang</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-blue-600/5 rounded-2xl border border-blue-100 p-4 flex justify-between items-center">
+                <div>
+                  <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Total Tagihan</div>
+                  <div className="text-2xl font-black text-gray-900">
+                    Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
+                  </div>
+                </div>
+                <div className="h-16 w-16 bg-white rounded-xl shadow-sm border border-gray-100 p-1 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SIMULASI_QRIS_SM_SPORT_${selectedSlot.court.id}`} 
+                    alt="QR" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            <div className="p-5 border-t border-gray-100 bg-white">
               <button
                 onClick={handleConfirmBooking}
-                className="flex-[2] px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={isBooking}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
               >
                 {isBooking ? (
-                  "Memproses..."
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Memproses...
+                  </>
                 ) : (
                   <>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
-                    [SIMULASI] Bayar Sekarang
+                    Simulasi Bayar QRIS
                   </>
                 )}
               </button>
