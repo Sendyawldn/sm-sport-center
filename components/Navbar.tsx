@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
+import { usePathname } from "next/navigation";
 
 const MenuIcon = ({ className = "w-6 h-6" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -7,8 +9,16 @@ const MenuIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-export default async function Navbar() {
-  const session = await getSession();
+export default function Navbar({ session }: { session: any }) {
+  const pathname = usePathname();
+
+  // Helper to determine active link styles
+  const getLinkClasses = (path: string) => {
+    if (pathname === path) {
+      return "text-blue-600 font-bold transition-colors";
+    }
+    return "text-gray-600 hover:text-blue-600 font-medium transition-colors";
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -22,10 +32,10 @@ export default async function Navbar() {
           </div>
           
           <div className="hidden md:flex space-x-8">
-            <Link href="/" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Beranda</Link>
-            <Link href="/booking" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Jadwal & Booking</Link>
+            <Link href="/" className={getLinkClasses("/")}>Beranda</Link>
+            <Link href="/booking" className={getLinkClasses("/booking")}>Jadwal & Booking</Link>
             {session && (
-              <Link href="/riwayat" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
+              <Link href="/riwayat" className={getLinkClasses("/riwayat")}>
                 Riwayat Pesanan
               </Link>
             )}
@@ -42,7 +52,7 @@ export default async function Navbar() {
                 </Link>
               </>
             ) : (
-              <Link href="/profil" className="text-sm text-gray-600 font-medium px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200">
+              <Link href="/profil" className={`text-sm font-medium px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors border ${pathname === '/profil' ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-600'}`}>
                 Akun Saya
               </Link>
             )}

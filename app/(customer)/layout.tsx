@@ -1,13 +1,16 @@
 import Navbar from "@/components/Navbar";
+import { getSession } from "@/lib/auth";
 
-export default function CustomerLayout({
+export default async function CustomerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getSession();
+
   return (
     <>
-      <Navbar />
+      <Navbar session={session} />
       {children}
     </>
   );
