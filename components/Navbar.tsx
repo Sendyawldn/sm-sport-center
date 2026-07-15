@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import AuthModal from "./AuthModal";
+import { logout } from "@/app/actions/auth";
 
 const MenuIcon = ({ className = "w-6 h-6" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -15,6 +16,7 @@ export default function Navbar({ session }: { session: any }) {
   const pathname = usePathname();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   // Helper to determine active link styles
   const getLinkClasses = (path: string) => {
@@ -62,13 +64,39 @@ export default function Navbar({ session }: { session: any }) {
                 </button>
               </>
             ) : (
-              <Link href="/profil" className={`text-sm font-bold px-5 py-2.5 rounded-md transition-colors border ${
-                pathname === '/profil' 
-                  ? 'border-[#991b1b] text-[#991b1b] bg-red-50' 
-                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}>
-                Akun Saya
-              </Link>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                  className={`flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-md transition-colors border ${
+                    isAccountMenuOpen 
+                      ? 'border-[#991b1b] text-[#991b1b] bg-red-50' 
+                      : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Akun Saya
+                  <svg className={`w-4 h-4 transition-transform ${isAccountMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {isAccountMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 overflow-hidden">
+                    {/* Click overlay to close dropdown when clicking outside */}
+                    <div className="fixed inset-0 z-[-1]" onClick={() => setIsAccountMenuOpen(false)}></div>
+                    <form action={logout}>
+                      <button 
+                        type="submit" 
+                        className="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Keluar
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
