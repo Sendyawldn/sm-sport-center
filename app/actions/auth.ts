@@ -51,7 +51,7 @@ export async function register(prevState: any, formData: FormData) {
     return { error: "Terjadi kesalahan pada server" };
   }
 
-  redirect("/");
+  return { success: true };
 }
 
 export async function login(prevState: any, formData: FormData) {
@@ -81,14 +81,11 @@ export async function login(prevState: any, formData: FormData) {
     await setSession({ id: user.id, role: user.role });
     
     if (user.role === "ADMIN") {
-      redirect("/admin/dashboard");
+      return { success: true, redirectUrl: "/admin/dashboard" };
     } else {
-      redirect("/");
+      return { success: true };
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
-      throw error;
-    }
     return { error: "Terjadi kesalahan pada server" };
   }
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 const MenuIcon = ({ className = "w-6 h-6" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -12,6 +13,8 @@ const MenuIcon = ({ className = "w-6 h-6" }) => (
 
 export default function Navbar({ session }: { session: any }) {
   const pathname = usePathname();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   // Helper to determine active link styles
   const getLinkClasses = (path: string) => {
@@ -45,12 +48,18 @@ export default function Navbar({ session }: { session: any }) {
           <div className="hidden md:flex items-center space-x-4">
             {!session ? (
               <>
-                <Link href="/login" className="text-gray-600 hover:text-[#991b1b] font-medium px-4 py-2">
+                <button 
+                  onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
+                  className="text-gray-600 hover:text-[#991b1b] font-medium px-4 py-2"
+                >
                   Masuk
-                </Link>
-                <Link href="/register" className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white font-bold px-6 py-2.5 rounded-md transition-colors shadow-sm">
+                </button>
+                <button 
+                  onClick={() => { setAuthMode("register"); setIsAuthModalOpen(true); }}
+                  className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white font-bold px-6 py-2.5 rounded-md transition-colors shadow-sm"
+                >
                   Daftar
-                </Link>
+                </button>
               </>
             ) : (
               <Link href="/profil" className={`text-sm font-bold px-5 py-2.5 rounded-md transition-colors border ${
@@ -70,6 +79,12 @@ export default function Navbar({ session }: { session: any }) {
           </div>
         </div>
       </div>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        defaultMode={authMode} 
+      />
     </nav>
   );
 }
