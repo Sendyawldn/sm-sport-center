@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ASSETS } from "@/lib/assets";
-import { getSession } from "@/lib/auth";
 
 // --- Inline SVGs ---
 const CheckCircleIcon = ({ className = "w-6 h-6" }) => (
@@ -34,11 +33,6 @@ const ShieldIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-const MenuIcon = ({ className = "w-6 h-6" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-  </svg>
-);
 
 // --- Dummy Data ---
 const courts = [
@@ -62,59 +56,9 @@ const testimonials = [
   { name: "Siti Rahma", role: "Koordinator Lomba", text: "Bantu banget buat block jadwal turnamen seharian. Pembayaran juga transparan." },
 ];
 
-export default async function LandingPage() {
-  const session = await getSession();
-
+export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900 scroll-smooth">
-      {/* 1. Navbar */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex-shrink-0 flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg leading-none">SM</span>
-              </div>
-              <span className="font-bold text-xl tracking-tight text-gray-900">Sport Center</span>
-            </div>
-            
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Beranda</a>
-              <a href="#lapangan" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Info Lapangan</a>
-              <a href="#keunggulan" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Keunggulan</a>
-              <a href="#kontak" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Kontak</a>
-              {session && (
-                <Link href="/riwayat" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
-                  Riwayat Pesanan
-                </Link>
-              )}
-            </div>
-
-            <div className="hidden md:flex items-center space-x-4">
-              {!session ? (
-                <>
-                  <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium px-4 py-2">
-                    Masuk
-                  </Link>
-                  <Link href="/register" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-full transition-colors shadow-sm">
-                    Daftar
-                  </Link>
-                </>
-              ) : (
-                <div className="text-sm text-gray-600 font-medium px-4 py-2">
-                  Halo, Akun Saya
-                </div>
-              )}
-            </div>
-
-            <div className="md:hidden flex items-center">
-              <button className="text-gray-600 hover:text-gray-900">
-                <MenuIcon className="w-7 h-7" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* 2. Hero Section */}
       <header className="relative bg-white overflow-hidden">
