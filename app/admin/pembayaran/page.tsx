@@ -15,7 +15,9 @@ export default async function VerifikasiPembayaranPage() {
       }
     },
     orderBy: {
-      createdAt: "asc"
+      booking: {
+        createdAt: "asc"
+      }
     }
   });
 
