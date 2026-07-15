@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Sendyawldn/sm-sport-center/main/public/placeholder.png" alt="SM Sport Center Logo" width="120" />
 
-## Getting Started
+  <h1 align="center">🏟️ SM Sport Center</h1>
 
-First, run the development server:
+  <p align="center">
+    <strong>Sistem Reservasi Lapangan Futsal & Badminton Terintegrasi</strong>
+  </p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+  <p align="center">
+    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
+    <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white" alt="Prisma" /></a>
+    <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+  </p>
+</div>
+
+---
+
+## ✨ Fitur Utama
+
+- **📅 Real-Time Booking System:** Pesan jadwal lapangan Futsal & Badminton tanpa bentrok.
+- **🔒 Anti Double-Booking:** Validasi ganda di frontend dan backend menggunakan transaksi database ACID untuk memastikan jadwal aman.
+- **⏳ Auto-Cancel Cron:** Pesanan dibatalkan otomatis jika melewati batas waktu tunggu pembayaran (15 menit).
+- **🛡️ Autentikasi Pengguna:** Login dan Registrasi berbasis Session JWT untuk Admin & Pelanggan.
+- **👑 Dasbor Admin Terpadu:** Validasi dan konfirmasi pembayaran manual, pengaturan lapangan, dan laporan.
+- **📱 Responsif:** Tampilan UI ramah pengguna baik dari ponsel maupun desktop.
+
+## 🛠️ Teknologi yang Digunakan
+
+| Kategori | Teknologi | Deskripsi |
+| :--- | :--- | :--- |
+| **Framework** | [Next.js (App Router)](https://nextjs.org) | Frontend & Backend SSR/API terpadu |
+| **Styling** | [Tailwind CSS](https://tailwindcss.com/) | Mobile-first CSS framework |
+| **ORM** | [Prisma](https://prisma.io) | Type-safe database client |
+| **Database** | [PostgreSQL](https://postgresql.org) | Database relasional robust (ACID compliant) |
+| **Keamanan** | `bcryptjs` & `jose` | Password hashing & JWT Session Cookies |
+
+## 🚀 Persiapan & Instalasi (Development)
+
+Pastikan Anda sudah menginstal **Node.js (versi 18+)** dan menjalankan server PostgreSQL lokal.
+
+1. **Clone repository ini:**
+   ```bash
+   git clone https://github.com/Sendyawldn/sm-sport-center.git
+   cd sm-sport-center
+   ```
+
+2. **Instal dependensi:**
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi Environment:**
+   Buat file `.env` dan tambahkan `DATABASE_URL` serta `JWT_SECRET`.
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/sm_sport_center?schema=public"
+   JWT_SECRET="secret-key-super-aman"
+   ```
+
+4. **Inisialisasi Database (Push Schema & Seeding):**
+   ```bash
+   npx prisma db push
+   npx tsx prisma/seed.ts
+   ```
+   *(Skrip seed akan otomatis membuat akun Admin bawaan: `admin@smsport.com` / `admin123`)*
+
+5. **Jalankan Aplikasi:**
+   Untuk menjalankan server Next.js di terminal pertama:
+   ```bash
+   npm run dev
+   ```
+   Untuk menjalankan **Cron Auto-Cancel** di terminal kedua:
+   ```bash
+   npx tsx scripts/cron.ts
+   ```
+
+## 📁 Struktur Direktori Penting
+
+```text
+sm-sport-center/
+├── app/
+│   ├── (customer)/      # Halaman pelanggan (Beranda, Jadwal, Profil)
+│   ├── admin/           # Area khusus Admin (Validasi, Laporan)
+│   └── actions/         # Server Actions Next.js (Auth, Booking, Payment)
+├── components/          # Komponen UI React (Navbar, AuthModal, dll)
+├── prisma/              # Prisma schema & seeding script
+└── scripts/             # Skrip Cron Jobs (auto-cancel.ts)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📝 Akun Pengujian (Testing)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Admin Dashboard:** `/admin/dashboard`
+  - **Email:** `admin@smsport.com`
+  - **Password:** `admin123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+<div align="center">
+  Dibuat dengan ❤️ untuk kemudahan olahraga Anda.
+</div>
