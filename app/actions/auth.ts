@@ -5,7 +5,7 @@ import { setSession, clearSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 
-export async function register(formData: FormData) {
+export async function register(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
   const contact = formData.get("contact") as string; // can be email or phone
   const password = formData.get("password") as string;
@@ -54,7 +54,7 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
-export async function login(formData: FormData) {
+export async function login(prevState: any, formData: FormData) {
   const contact = formData.get("contact") as string;
   const password = formData.get("password") as string;
 
