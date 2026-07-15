@@ -47,6 +47,8 @@ export async function simulateQrisPayment(bookingId: string, paymentType: "DP_50
 
     revalidatePath("/riwayat");
     revalidatePath("/admin/dashboard");
+    revalidatePath("/booking");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Payment simulation error:", error);
@@ -94,6 +96,8 @@ export async function konfirmasiPelunasanCash(bookingId: string) {
 
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/laporan");
+    revalidatePath("/booking");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Confirm cash payment error:", error);

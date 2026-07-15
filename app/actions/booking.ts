@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { parseISO } from "date-fns";
+import { revalidatePath } from "next/cache";
 
 export async function createBooking(courtId: string, bookingDate: string, startTimeStr: string, duration: number, paymentType: "DP_50" | "FULL_100" = "FULL_100") {
   try {
@@ -39,8 +40,9 @@ export async function createBooking(courtId: string, bookingDate: string, startT
     const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute}`;
     const endTimeDate = new Date(`1970-01-01T${endTimeStr}:00.000Z`);
 
-    // Parse bookingDate for @db.Date
-    const bookingDateObj = new Date(`${bookingDate}T00:00:00.000Z`);
+    // Parse bookingDate for @db.Date using a range to avoid timezone mismatch
+    const startDate = new Date(`${bookingDate}T00:00:00.000Z`);
+    const endDate = new Date(`${bookingDate}T23:59:59.999Z`);
 
     // Fetch court to calculate price
     const court = await prisma.court.findUnique({
@@ -60,7 +62,10 @@ export async function createBooking(courtId: string, bookingDate: string, startT
       const overlappingBooking = await tx.booking.findFirst({
         where: {
           courtId,
-          bookingDate: bookingDateObj,
+          bookingDate: {
+            gte: startDate,
+            lte: endDate,
+          },
           status: { in: ['PENDING', 'PAID_DP', 'PAID'] },
           AND: [
             { startTime: { lt: endTimeDate } },
@@ -78,7 +83,7 @@ export async function createBooking(courtId: string, bookingDate: string, startT
         data: {
           userId: session.id,
           courtId,
-          bookingDate: bookingDateObj,
+          bookingDate: startDate,
           startTime: startTimeDate,
           endTime: endTimeDate,
           totalPrice,
@@ -91,6 +96,9 @@ export async function createBooking(courtId: string, bookingDate: string, startT
       return booking;
     });
 
+    revalidatePath('/booking');
+    revalidatePath('/');
+    
     return { success: true, bookingId: result.id };
   } catch (error: any) {
     if (error.message === "Jadwal baru saja dipesan orang lain.") {

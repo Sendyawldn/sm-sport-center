@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const dateStr = searchParams.get('date');
@@ -9,7 +11,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Parameter date diperlukan.' }, { status: 400 });
   }
 
-  const bookingDate = new Date(`${dateStr}T00:00:00.000Z`);
+  const startDate = new Date(`${dateStr}T00:00:00.000Z`);
+  const endDate = new Date(`${dateStr}T23:59:59.999Z`);
 
   try {
     const courts = await prisma.court.findMany({
@@ -21,8 +24,11 @@ export async function GET(request: Request) {
 
     const bookings = await prisma.booking.findMany({
       where: {
-        bookingDate,
-        status: { in: ['PENDING', 'PAID'] }
+        bookingDate: {
+          gte: startDate,
+          lte: endDate,
+        },
+        status: { in: ['PENDING', 'PAID_DP', 'PAID'] }
       },
       select: {
         id: true,

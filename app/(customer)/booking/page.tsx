@@ -28,7 +28,7 @@ const TIMEZONE = "Asia/Jakarta";
 
 const getCourtImage = (type: string) => {
   if (type.toUpperCase() === "FUTSAL") {
-    return "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+    return "https://images.unsplash.com/photo-1587384474964-3a06ce1ce699?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
   }
   return "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 };
