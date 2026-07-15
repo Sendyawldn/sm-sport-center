@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum CourtType {
+  FUTSAL
+  BADMINTON
+}
+
+enum CourtStatus {
+  AVAILABLE
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String?  @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  bookings  Booking[]
+
+  @@map("users")
+}
+
+model Court {
+  id           String      @id @default(uuid())
+  name         String
+  type         CourtType
+  pricePerHour Int         @map("price_per_hour")
+  status       CourtStatus @default(AVAILABLE)
+
+  bookings     Booking[]
+
+  @@map("courts")
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  courtId     String        @map("court_id")
+  bookingDate DateTime      @map("booking_date") @db.Date
+  startTime   DateTime      @map("start_time") @db.Time
+  endTime     DateTime      @map("end_time") @db.Time
+  totalPrice  Int           @map("total_price")
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  user        User          @relation(fields: [userId], references: [id])
+  court       Court         @relation(fields: [courtId], references: [id])
+  payment     Payment?
+
+  @@unique([courtId, bookingDate, startTime])
+  @@map("bookings")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  bookingId     String        @unique @map("booking_id")
+  paymentMethod String        @map("payment_method")
+  amount        Int
+  proofUrl      String?       @map("proof_url")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paidAt        DateTime?     @map("paid_at")
+
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
