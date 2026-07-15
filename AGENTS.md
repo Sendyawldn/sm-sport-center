@@ -95,6 +95,16 @@ Agent tidak boleh mengubah struktur inti tabel ini tanpa konfirmasi eksplisit da
 - Harga dihitung otomatis dari `price_per_hour` × durasi.
 - Jika ada tarif prime time vs reguler, definisikan aturan tarif sebagai data terkonfigurasi (bukan hardcoded di logic), agar admin bisa ubah tanpa deploy ulang.
 
+### 4.4 Validasi Waktu Lampau (Past Date/Time)
+
+- Tanggal yang sudah lewat dari hari ini (real-time server, bukan waktu di browser client) HARUS di-disable di kalender — tidak bisa dipilih/diklik.
+- Untuk **hari ini**, jam/slot yang sudah lewat dari jam saat ini juga HARUS di-disable. Contoh: jika sekarang jam 10:00, maka slot jam 09:00 dan sebelumnya untuk tanggal hari ini harus disabled, tapi slot jam 10:00 ke atas tetap bisa dipilih (sesuaikan aturan buffer minimum booking jika ada, misal minimal booking H+1 jam dari sekarang).
+- **WAJIB divalidasi di DUA tempat:**
+  1. **Frontend (UI):** tombol/slot tanggal & jam yang sudah lewat ditampilkan disabled/abu-abu, tidak bisa diklik.
+  2. **Backend (Server Action/API):** validasi ulang sebelum insert ke `bookings` — JANGAN hanya mengandalkan validasi frontend, karena request bisa dikirim langsung lewat API tanpa lewat UI.
+- Gunakan waktu **server** (misal `new Date()` di server action, atau `NOW()` di database) sebagai acuan "sekarang", jangan percaya waktu yang dikirim dari client, untuk mencegah manipulasi jam di perangkat pelanggan.
+- Perhatikan timezone: seluruh sistem harus konsisten menggunakan satu timezone (WIB / Asia/Jakarta), baik di database, server, maupun tampilan frontend — jangan campur UTC dan WIB tanpa konversi eksplisit.
+
 ## 5. Keamanan (wajib)
 
 - Password di-hash (bcrypt/argon2), jangan pernah simpan plaintext.
