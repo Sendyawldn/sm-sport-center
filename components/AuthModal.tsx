@@ -23,7 +23,7 @@ export default function AuthModal({
 
   // Handle successful login/register
   useEffect(() => {
-    if (loginState?.success) {
+    if (loginState?.success && isOpen) {
       onClose();
       if (loginState.redirectUrl) {
         router.push(loginState.redirectUrl);
@@ -31,14 +31,14 @@ export default function AuthModal({
         router.refresh();
       }
     }
-  }, [loginState, onClose, router]);
+  }, [loginState, isOpen, onClose, router]);
 
   useEffect(() => {
-    if (registerState?.success) {
+    if (registerState?.success && isOpen) {
       onClose();
       router.refresh();
     }
-  }, [registerState, onClose, router]);
+  }, [registerState, isOpen, onClose, router]);
 
   // Reset mode when modal opens
   useEffect(() => {
