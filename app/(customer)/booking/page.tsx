@@ -45,6 +45,13 @@ function BookingContent() {
     type: "error" | "success";
   } | null>(null);
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Generate hours: 08:00 to 23:00
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -86,7 +93,7 @@ function BookingContent() {
   }, [selectedDate]);
 
   const isSlotPast = (timeStr: string) => {
-    const now = new Date();
+    const now = currentTime;
     const todayStr = formatInTimeZone(now, TIMEZONE, "yyyy-MM-dd");
     if (selectedDate > todayStr) return false;
     if (selectedDate < todayStr) return true;

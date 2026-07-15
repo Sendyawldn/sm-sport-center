@@ -12,7 +12,7 @@ const MenuIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-export default function Navbar({ session }: { session: any }) {
+export default function Navbar({ session, user }: { session: any, user?: any }) {
   const pathname = usePathname();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -52,13 +52,13 @@ export default function Navbar({ session }: { session: any }) {
               <>
                 <button 
                   onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
-                  className="text-gray-600 hover:text-[#991b1b] font-medium px-4 py-2"
+                  className="text-gray-600 hover:text-[#991b1b] font-medium px-4 py-2 cursor-pointer"
                 >
                   Masuk
                 </button>
                 <button 
                   onClick={() => { setAuthMode("register"); setIsAuthModalOpen(true); }}
-                  className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white font-bold px-6 py-2.5 rounded-md transition-colors shadow-sm"
+                  className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white font-bold px-6 py-2.5 rounded-md transition-colors shadow-sm cursor-pointer"
                 >
                   Daftar
                 </button>
@@ -73,7 +73,7 @@ export default function Navbar({ session }: { session: any }) {
                       : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  Akun Saya
+                  {user?.name ? user.name : "Akun Saya"}
                   <svg className={`w-4 h-4 transition-transform ${isAccountMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -108,11 +108,13 @@ export default function Navbar({ session }: { session: any }) {
         </div>
       </div>
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        defaultMode={authMode} 
-      />
+      {isAuthModalOpen && (
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+          defaultMode={authMode} 
+        />
+      )}
     </nav>
   );
 }

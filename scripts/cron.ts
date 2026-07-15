@@ -6,8 +6,6 @@ console.log("Starting Auto-Cancel Cron Job...")
 
 // Runs every minute
 cron.schedule('* * * * *', async () => {
-  console.log(`[${new Date().toISOString()}] Menjalankan pengecekan auto-cancel...`)
-  
   try {
     const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000)
 
@@ -35,8 +33,6 @@ cron.schedule('* * * * *', async () => {
       })
       
       console.log(`Berhasil mengubah ${res.count} booking menjadi CANCELLED.`)
-    } else {
-      console.log("Tidak ada booking kadaluarsa yang ditemukan.")
     }
   } catch (error) {
     console.error("Gagal menjalankan cron job auto-cancel:", error)
