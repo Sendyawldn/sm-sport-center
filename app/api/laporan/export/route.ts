@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   // Build prisma where clause
   const where: any = {
-    status: "PAID"
+    status: { in: ["PAID", "PAID_DP"] }
   };
 
   if (start && end) {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     // Generate CSV string
     const csvRows = [];
     // Header
-    csvRows.push(['ID Booking', 'Tanggal Main', 'Jam Mulai', 'Jam Selesai', 'Lapangan', 'Tipe', 'Pelanggan', 'Email', 'Total Harga'].join(','));
+    csvRows.push(['ID Booking', 'Tanggal Main', 'Jam Mulai', 'Jam Selesai', 'Lapangan', 'Tipe', 'Pelanggan', 'Email', 'Status', 'Total Harga', 'Nominal Dibayar'].join(','));
 
     // Data
     for (const b of bookings) {
@@ -54,7 +54,9 @@ export async function GET(request: Request) {
         b.court.type,
         `"${b.user.name}"`,
         b.user.email,
-        b.totalPrice
+        b.status === "PAID" ? "Lunas 100%" : "DP 50%",
+        b.totalPrice,
+        b.paidAmount
       ];
       csvRows.push(row.join(','));
     }

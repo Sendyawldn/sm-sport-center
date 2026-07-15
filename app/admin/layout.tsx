@@ -24,9 +24,6 @@ export default async function AdminLayout({
           <Link href="/admin/dashboard" className="block px-4 py-3 rounded-xl hover:bg-gray-800 transition-colors text-gray-300">
             📊 Dashboard
           </Link>
-          <Link href="/admin/pembayaran" className="block px-4 py-3 rounded-xl hover:bg-gray-800 transition-colors text-gray-300">
-            💰 Verifikasi Pembayaran
-          </Link>
           <Link href="/admin/laporan" className="block px-4 py-3 rounded-xl hover:bg-gray-800 transition-colors text-gray-300">
             📈 Laporan Ekspor
           </Link>

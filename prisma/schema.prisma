@@ -23,8 +23,14 @@ enum CourtStatus {
 
 enum BookingStatus {
   PENDING
+  PAID_DP
   PAID
   CANCELLED
+}
+
+enum PaymentType {
+  DP_50
+  FULL_100
 }
 
 enum PaymentStatus {
@@ -67,6 +73,8 @@ model Booking {
   startTime   DateTime      @map("start_time") @db.Time
   endTime     DateTime      @map("end_time") @db.Time
   totalPrice  Int           @map("total_price")
+  paymentType PaymentType   @default(FULL_100) @map("payment_type")
+  paidAmount  Int           @default(0) @map("paid_amount")
   status      BookingStatus @default(PENDING)
   createdAt   DateTime      @default(now()) @map("created_at")
 

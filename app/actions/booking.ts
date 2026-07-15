@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { parseISO } from "date-fns";
 
-export async function createBooking(courtId: string, bookingDate: string, startTimeStr: string, duration: number) {
+export async function createBooking(courtId: string, bookingDate: string, startTimeStr: string, duration: number, paymentType: "DP_50" | "FULL_100" = "FULL_100") {
   try {
     const session = await getSession();
     if (!session) {
@@ -52,6 +52,7 @@ export async function createBooking(courtId: string, bookingDate: string, startT
     }
 
     const totalPrice = court.pricePerHour * duration;
+    const paidAmount = paymentType === "DP_50" ? totalPrice / 2 : totalPrice;
 
     // Transaction for anti double-booking
     const result = await prisma.$transaction(async (tx: any) => {
@@ -60,7 +61,7 @@ export async function createBooking(courtId: string, bookingDate: string, startT
         where: {
           courtId,
           bookingDate: bookingDateObj,
-          status: { in: ['PENDING', 'PAID'] },
+          status: { in: ['PENDING', 'PAID_DP', 'PAID'] },
           AND: [
             { startTime: { lt: endTimeDate } },
             { endTime: { gt: startTimeDate } },
@@ -81,6 +82,8 @@ export async function createBooking(courtId: string, bookingDate: string, startT
           startTime: startTimeDate,
           endTime: endTimeDate,
           totalPrice,
+          paymentType,
+          paidAmount,
           status: 'PENDING',
         },
       });

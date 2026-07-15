@@ -1,20 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { konfirmasiPelunasanCash } from "@/app/actions/payment";
 
 export default async function AdminDashboardPage() {
   // Ambil metrik dasar
   const totalUsers = await prisma.user.count({ where: { role: "CUSTOMER" } });
   
   const totalBookings = await prisma.booking.count({
-    where: { status: { in: ["PAID", "PENDING"] } }
+    where: { status: { in: ["PAID", "PAID_DP", "PENDING"] } }
   });
 
   const revenueResult = await prisma.booking.aggregate({
-    _sum: { totalPrice: true },
-    where: { status: "PAID" }
+    _sum: { paidAmount: true },
+    where: { status: { in: ["PAID", "PAID_DP"] } }
   });
-  const totalRevenue = revenueResult._sum.totalPrice || 0;
+  const totalRevenue = revenueResult._sum?.paidAmount || 0;
 
   const pendingPayments = await prisma.payment.count({
     where: { paymentStatus: "PENDING" }
@@ -44,7 +45,7 @@ export default async function AdminDashboardPage() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
           <span className="text-gray-500 text-sm font-medium mb-2">Total Reservasi</span>
           <span className="text-3xl font-bold text-gray-900">{totalBookings}</span>
-          <span className="text-xs text-gray-400 mt-1">Status Paid & Pending</span>
+          <span className="text-xs text-gray-400 mt-1">Total reservasi masuk</span>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
@@ -71,7 +72,7 @@ export default async function AdminDashboardPage() {
                 <th className="p-4 font-semibold text-gray-600">Pelanggan</th>
                 <th className="p-4 font-semibold text-gray-600">Lapangan</th>
                 <th className="p-4 font-semibold text-gray-600">Jadwal</th>
-                <th className="p-4 font-semibold text-gray-600">Status</th>
+                <th className="p-4 font-semibold text-gray-600">Status & Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -92,9 +93,20 @@ export default async function AdminDashboardPage() {
                     </div>
                   </td>
                   <td className="p-4">
-                    {b.status === "PAID" && <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">PAID</span>}
-                    {b.status === "PENDING" && <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold">PENDING</span>}
-                    {b.status === "CANCELLED" && <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold">CANCELLED</span>}
+                    <div className="flex flex-col gap-2 items-start">
+                      {b.status === "PAID" && <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">LUNAS 100%</span>}
+                      {b.status === "PAID_DP" && <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold">DP 50%</span>}
+                      {b.status === "PENDING" && <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold">PENDING</span>}
+                      {b.status === "CANCELLED" && <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold">CANCELLED</span>}
+                      
+                      {b.status === "PAID_DP" && (
+                        <form action={async () => { "use server"; await konfirmasiPelunasanCash(b.id); }}>
+                          <button type="submit" className="bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                            💵 Terima Pelunasan (Rp {(b.totalPrice - b.paidAmount).toLocaleString("id-ID")})
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

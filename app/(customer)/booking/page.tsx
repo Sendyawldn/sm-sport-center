@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBooking } from "@/app/actions/booking";
+import { simulateQrisPayment } from "@/app/actions/payment";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { format, parseISO } from "date-fns";
 import FilterBar from "@/components/FilterBar";
@@ -26,6 +27,7 @@ type Booking = {
 const TIMEZONE = "Asia/Jakarta";
 
 function BookingContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const sportFilter = searchParams?.get("sport") || "";
   const dateFilter = searchParams?.get("date") || "";
@@ -40,6 +42,7 @@ function BookingContent() {
     time: string;
   } | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [paymentType, setPaymentType] = useState<"DP_50" | "FULL_100">("FULL_100");
   const [message, setMessage] = useState<{
     text: string;
     type: "error" | "success";
@@ -141,25 +144,30 @@ function BookingContent() {
       selectedDate,
       selectedSlot.time,
       1,
+      paymentType
     );
-    setIsBooking(false);
 
     if (res.error) {
+      setIsBooking(false);
       setMessage({ text: res.error, type: "error" });
-    } else {
-      setMessage({
-        text: "Booking berhasil ditahan selama 15 menit. Silakan lakukan pembayaran.",
-        type: "success",
-      });
-      setSelectedSlot(null);
-      // Refresh
-      setLoading(true);
-      const data = await fetch(`/api/courts?date=${selectedDate}`).then((r) =>
-        r.json(),
-      );
-      if (data.courts) setCourts(data.courts);
-      if (data.bookings) setBookings(data.bookings);
-      setLoading(false);
+      return;
+    }
+
+    if (res.bookingId) {
+      const qrisRes = await simulateQrisPayment(res.bookingId, paymentType);
+      setIsBooking(false);
+      
+      if (qrisRes.error) {
+        setMessage({ text: qrisRes.error, type: "error" });
+      } else {
+        setMessage({
+          text: "Pembayaran berhasil! Mengalihkan...",
+          type: "success",
+        });
+        setTimeout(() => {
+          router.push("/riwayat");
+        }, 1500);
+      }
     }
   };
 
@@ -315,12 +323,53 @@ function BookingContent() {
                   {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
                 </span>
               </div>
-              <div className="flex justify-between pb-3">
+              <div className="flex justify-between pb-3 border-b border-gray-100">
                 <span className="text-gray-500">Total Harga</span>
-                <span className="font-bold text-blue-600 text-lg">
+                <span className="font-bold text-gray-700">
                   Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
                 </span>
               </div>
+              
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Metode Pembayaran</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("DP_50")}
+                    className={`border p-3 rounded-lg text-left transition-colors ${paymentType === "DP_50" ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-gray-200 hover:border-blue-300"}`}
+                  >
+                    <div className="font-medium text-gray-900 text-sm">DP 50%</div>
+                    <div className="text-xs text-gray-500 mt-1">Sisa bayar di lokasi</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentType("FULL_100")}
+                    className={`border p-3 rounded-lg text-left transition-colors ${paymentType === "FULL_100" ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-gray-200 hover:border-blue-300"}`}
+                  >
+                    <div className="font-medium text-gray-900 text-sm">Lunas 100%</div>
+                    <div className="text-xs text-gray-500 mt-1">Bayar penuh sekarang</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center py-3 bg-gray-50 px-4 rounded-lg border border-gray-100">
+                <span className="text-gray-600 font-medium">Nominal Dibayar</span>
+                <span className="font-bold text-blue-600 text-xl">
+                  Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
+                </span>
+              </div>
+
+              <div className="flex justify-center py-4 border-y border-gray-100">
+                <div className="text-center">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SIMULASI_QRIS_SM_SPORT_${selectedSlot.court.id}`} 
+                    alt="QRIS Simulation" 
+                    className="mx-auto border p-2 rounded-lg bg-white mb-2 shadow-sm"
+                  />
+                  <div className="text-xs text-gray-500 font-mono">SIMULASI QRIS SM SPORT CENTER</div>
+                </div>
+              </div>
+
             </div>
 
             <div className="p-6 bg-gray-50 flex gap-3">
@@ -329,17 +378,26 @@ function BookingContent() {
                   setSelectedSlot(null);
                   setMessage(null);
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
                 disabled={isBooking}
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmBooking}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-[2] px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 disabled={isBooking}
               >
-                {isBooking ? "Memproses..." : "Pesan & Hold 15 Menit"}
+                {isBooking ? (
+                  "Memproses..."
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    [SIMULASI] Bayar Sekarang
+                  </>
+                )}
               </button>
             </div>
           </div>

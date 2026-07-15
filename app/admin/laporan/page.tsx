@@ -12,7 +12,7 @@ export default async function LaporanPage(props: { searchParams: Promise<{ start
 
   // Build prisma where clause
   const where: any = {
-    status: "PAID"
+    status: { in: ["PAID", "PAID_DP"] }
   };
 
   if (start && end) {
@@ -40,7 +40,7 @@ export default async function LaporanPage(props: { searchParams: Promise<{ start
     }
   });
 
-  const totalRevenue = bookings.reduce((sum: number, b: any) => sum + b.totalPrice, 0);
+  const totalRevenue = bookings.reduce((sum: number, b: any) => sum + b.paidAmount, 0);
 
   return (
     <div>
@@ -119,7 +119,7 @@ export default async function LaporanPage(props: { searchParams: Promise<{ start
                 <th className="p-4 font-semibold text-gray-600">Tanggal Main</th>
                 <th className="p-4 font-semibold text-gray-600">Lapangan</th>
                 <th className="p-4 font-semibold text-gray-600">Pelanggan</th>
-                <th className="p-4 font-semibold text-gray-600">Total Harga</th>
+                <th className="p-4 font-semibold text-gray-600">Total & Status</th>
               </tr>
             </thead>
             <tbody>
@@ -137,7 +137,17 @@ export default async function LaporanPage(props: { searchParams: Promise<{ start
                     {b.user.name}
                     <div className="text-xs text-gray-400 mt-1">{b.user.email}</div>
                   </td>
-                  <td className="p-4 text-sm font-bold text-gray-900">Rp {b.totalPrice.toLocaleString("id-ID")}</td>
+                  <td className="p-4 text-sm">
+                    <div className="font-bold text-gray-900">Total: Rp {b.totalPrice.toLocaleString("id-ID")}</div>
+                    <div className="font-medium text-blue-600 mt-1">Dibayar: Rp {b.paidAmount.toLocaleString("id-ID")}</div>
+                    <div className="mt-2">
+                      {b.status === "PAID" ? (
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">LUNAS 100%</span>
+                      ) : (
+                        <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold">DP 50%</span>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

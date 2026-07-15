@@ -2,26 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import fs from "fs/promises";
-import path from "path";
-import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
-export async function uploadPaymentProof(formData: FormData) {
+export async function simulateQrisPayment(bookingId: string, paymentType: "DP_50" | "FULL_100") {
   try {
     const session = await getSession();
     if (!session) {
       return { error: "Sesi tidak valid. Silakan login ulang." };
     }
 
-    const bookingId = formData.get("bookingId") as string;
-    const file = formData.get("file") as File;
-
-    if (!bookingId || !file || file.size === 0) {
-      return { error: "Booking ID dan File Bukti Transfer wajib diisi." };
-    }
-
-    // Pastikan booking valid dan milik user
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId }
     });
@@ -34,118 +23,80 @@ export async function uploadPaymentProof(formData: FormData) {
       return { error: "Status booking tidak valid untuk pembayaran." };
     }
 
-    // Siapkan folder uploads di public
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    try {
-      await fs.access(uploadsDir);
-    } catch {
-      await fs.mkdir(uploadsDir, { recursive: true });
+    const newStatus = paymentType === "DP_50" ? "PAID_DP" : "PAID";
+    const amountToPay = paymentType === "DP_50" ? booking.totalPrice / 2 : booking.totalPrice;
+
+    await prisma.$transaction(async (tx: any) => {
+      // Create payment record
+      await tx.payment.create({
+        data: {
+          bookingId,
+          paymentMethod: "QRIS_SIMULATION",
+          amount: amountToPay,
+          paymentStatus: "PAID",
+          paidAt: new Date(),
+        }
+      });
+
+      // Update booking status
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: newStatus }
+      });
+    });
+
+    revalidatePath("/riwayat");
+    revalidatePath("/admin/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Payment simulation error:", error);
+    return { error: "Terjadi kesalahan saat memproses pembayaran." };
+  }
+}
+
+export async function konfirmasiPelunasanCash(bookingId: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") {
+      return { error: "Akses ditolak." };
     }
 
-    // Buat nama file unik
-    const ext = path.extname(file.name) || ".png";
-    const filename = `${crypto.randomUUID()}${ext}`;
-    const filePath = path.join(uploadsDir, filename);
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId }
+    });
 
-    // Simpan file
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile(filePath, buffer);
+    if (!booking) return { error: "Booking tidak ditemukan." };
+    if (booking.status !== "PAID_DP") {
+      return { error: "Booking ini bukan status PAID_DP (Belum Lunas DP)." };
+    }
 
-    const proofUrl = `/uploads/${filename}`;
+    const remainingAmount = booking.totalPrice - booking.paidAmount;
 
-    // Buat Payment Record
     await prisma.$transaction(async (tx: any) => {
       await tx.payment.create({
         data: {
           bookingId,
-          paymentMethod: "TRANSFER",
-          amount: booking.totalPrice,
-          proofUrl,
-          paymentStatus: "PENDING",
-        }
-      });
-      // Optionally, kita tidak mengubah status Booking sampai diverifikasi, 
-      // tetapi untuk UX, status Booking tetap PENDING, admin melihat dari Payment
-    });
-
-    revalidatePath("/riwayat");
-    return { success: true };
-  } catch (error) {
-    console.error("Payment upload error:", error);
-    return { error: "Terjadi kesalahan saat mengunggah bukti pembayaran." };
-  }
-}
-
-export async function verifyPayment(paymentId: string) {
-  try {
-    const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
-      return { error: "Akses ditolak." };
-    }
-
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId }
-    });
-
-    if (!payment) return { error: "Payment tidak ditemukan." };
-
-    await prisma.$transaction(async (tx: any) => {
-      await tx.payment.update({
-        where: { id: paymentId },
-        data: {
+          paymentMethod: "CASH_ONSITE",
+          amount: remainingAmount,
           paymentStatus: "PAID",
-          paidAt: new Date()
+          paidAt: new Date(),
         }
       });
 
       await tx.booking.update({
-        where: { id: payment.bookingId },
-        data: { status: "PAID" }
-      });
-    });
-
-    revalidatePath("/admin/pembayaran");
-    return { success: true };
-  } catch (error) {
-    console.error("Verify payment error:", error);
-    return { error: "Gagal verifikasi pembayaran." };
-  }
-}
-
-export async function rejectPayment(paymentId: string) {
-  try {
-    const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
-      return { error: "Akses ditolak." };
-    }
-
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId }
-    });
-
-    if (!payment) return { error: "Payment tidak ditemukan." };
-
-    await prisma.$transaction(async (tx: any) => {
-      await tx.payment.update({
-        where: { id: paymentId },
+        where: { id: bookingId },
         data: {
-          paymentStatus: "FAILED"
+          status: "PAID",
+          paidAmount: booking.totalPrice // Update paidAmount to full
         }
-      });
-      
-      // Jika pembayaran ditolak, batalkan booking sekalian atau biarkan PENDING agar bisa upload ulang.
-      // Di sini kita ubah Booking ke CANCELLED agar slot lapangan kembali kosong.
-      await tx.booking.update({
-        where: { id: payment.bookingId },
-        data: { status: "CANCELLED" }
       });
     });
 
-    revalidatePath("/admin/pembayaran");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/admin/laporan");
     return { success: true };
   } catch (error) {
-    console.error("Reject payment error:", error);
-    return { error: "Gagal menolak pembayaran." };
+    console.error("Confirm cash payment error:", error);
+    return { error: "Gagal memproses pelunasan cash." };
   }
 }
