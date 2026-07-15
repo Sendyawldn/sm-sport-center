@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ASSETS } from "@/lib/assets";
+import { getSession } from "@/lib/auth";
 
 // --- Inline SVGs ---
 const CheckCircleIcon = ({ className = "w-6 h-6" }) => (
@@ -61,7 +62,9 @@ const testimonials = [
   { name: "Siti Rahma", role: "Koordinator Lomba", text: "Bantu banget buat block jadwal turnamen seharian. Pembayaran juga transparan." },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900 scroll-smooth">
       {/* 1. Navbar */}
@@ -80,15 +83,28 @@ export default function LandingPage() {
               <a href="#lapangan" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Info Lapangan</a>
               <a href="#keunggulan" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Keunggulan</a>
               <a href="#kontak" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Kontak</a>
+              {session && (
+                <Link href="/riwayat" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
+                  Riwayat Pesanan
+                </Link>
+              )}
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium px-4 py-2">
-                Masuk
-              </Link>
-              <Link href="/register" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-full transition-colors shadow-sm">
-                Daftar
-              </Link>
+              {!session ? (
+                <>
+                  <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium px-4 py-2">
+                    Masuk
+                  </Link>
+                  <Link href="/register" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-full transition-colors shadow-sm">
+                    Daftar
+                  </Link>
+                </>
+              ) : (
+                <div className="text-sm text-gray-600 font-medium px-4 py-2">
+                  Halo, Akun Saya
+                </div>
+              )}
             </div>
 
             <div className="md:hidden flex items-center">
