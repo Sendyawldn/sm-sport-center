@@ -1,0 +1,107 @@
+import { prisma } from "@/lib/prisma";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+
+export default async function AdminDashboardPage() {
+  // Ambil metrik dasar
+  const totalUsers = await prisma.user.count({ where: { role: "CUSTOMER" } });
+  
+  const totalBookings = await prisma.booking.count({
+    where: { status: { in: ["PAID", "PENDING"] } }
+  });
+
+  const revenueResult = await prisma.booking.aggregate({
+    _sum: { totalPrice: true },
+    where: { status: "PAID" }
+  });
+  const totalRevenue = revenueResult._sum.totalPrice || 0;
+
+  const pendingPayments = await prisma.payment.count({
+    where: { paymentStatus: "PENDING" }
+  });
+
+  // Ambil 5 booking terbaru
+  const recentBookings = await prisma.booking.findMany({
+    take: 5,
+    orderBy: { createdAt: "desc" },
+    include: {
+      user: true,
+      court: true
+    }
+  });
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard Statistik</h1>
+
+      {/* Grid Metrik */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+          <span className="text-gray-500 text-sm font-medium mb-2">Total Pendapatan</span>
+          <span className="text-3xl font-bold text-blue-600">Rp {totalRevenue.toLocaleString("id-ID")}</span>
+        </div>
+        
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+          <span className="text-gray-500 text-sm font-medium mb-2">Total Reservasi</span>
+          <span className="text-3xl font-bold text-gray-900">{totalBookings}</span>
+          <span className="text-xs text-gray-400 mt-1">Status Paid & Pending</span>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+          <span className="text-gray-500 text-sm font-medium mb-2">Pelanggan Terdaftar</span>
+          <span className="text-3xl font-bold text-gray-900">{totalUsers}</span>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+          <span className="text-gray-500 text-sm font-medium mb-2">Menunggu Verifikasi</span>
+          <span className="text-3xl font-bold text-orange-600">{pendingPayments}</span>
+          <span className="text-xs text-gray-400 mt-1">Pembayaran perlu dicek</span>
+        </div>
+      </div>
+
+      {/* Tabel Booking Terbaru */}
+      <h2 className="text-xl font-bold text-gray-900 mb-4">5 Reservasi Terbaru</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {recentBookings.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">Belum ada data reservasi.</div>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="p-4 font-semibold text-gray-600">Pelanggan</th>
+                <th className="p-4 font-semibold text-gray-600">Lapangan</th>
+                <th className="p-4 font-semibold text-gray-600">Jadwal</th>
+                <th className="p-4 font-semibold text-gray-600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentBookings.map((b) => (
+                <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="p-4">
+                    <div className="font-bold text-gray-900">{b.user.name}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className="text-gray-700">{b.court.name}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className="text-gray-700 text-sm">
+                      {format(new Date(b.bookingDate), "dd MMM yyyy", { locale: id })} <br/>
+                      <span className="text-gray-500">
+                        {b.startTime.toISOString().substring(11, 16)} - {b.endTime.toISOString().substring(11, 16)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    {b.status === "PAID" && <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">PAID</span>}
+                    {b.status === "PENDING" && <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold">PENDING</span>}
+                    {b.status === "CANCELLED" && <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold">CANCELLED</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
