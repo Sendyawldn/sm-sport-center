@@ -94,7 +94,7 @@ export async function verifyPayment(paymentId: string) {
       await tx.payment.update({
         where: { id: paymentId },
         data: {
-          paymentStatus: "VERIFIED",
+          paymentStatus: "PAID",
           paidAt: new Date()
         }
       });
@@ -130,7 +130,7 @@ export async function rejectPayment(paymentId: string) {
       await tx.payment.update({
         where: { id: paymentId },
         data: {
-          paymentStatus: "REJECTED"
+          paymentStatus: "FAILED"
         }
       });
       
