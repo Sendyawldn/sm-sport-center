@@ -162,14 +162,35 @@ function BookingContent() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-28 pb-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <FilterBar className="mb-10 relative z-20 max-w-7xl" />
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Jadwal Lapangan
-        </h1>
+    <div className="min-h-screen bg-gray-50 font-sans pb-10">
+      {/* Banner Section */}
+      <div className="relative pt-32 pb-24 bg-[#a6192e] overflow-hidden">
+        {/* Topographic background SVG */}
+        <div className="absolute inset-0 opacity-15">
+          <svg className="w-full h-full object-cover" preserveAspectRatio="none" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,160 C320,300 420,0 720,160 C1020,320 1120,0 1440,160" stroke="white" strokeWidth="1.5" />
+            <path d="M0,80 C320,220 420,-80 720,80 C1020,240 1120,-80 1440,80" stroke="white" strokeWidth="1" />
+            <path d="M0,240 C320,380 420,80 720,240 C1020,400 1120,80 1440,240" stroke="white" strokeWidth="1" />
+            <path d="M0,120 C400,0 600,320 1000,160 C1200,80 1300,200 1440,120" stroke="white" strokeWidth="1" />
+            <path d="M0,200 C400,80 600,400 1000,240 C1200,160 1300,280 1440,200" stroke="white" strokeWidth="1.5" strokeDasharray="6,4"/>
+            <path d="M0,40 C400,-80 600,240 1000,80 C1200,0 1300,120 1440,40" stroke="white" strokeWidth="1" opacity="0.6"/>
+            <path d="M0,280 C400,160 600,480 1000,320 C1200,240 1300,360 1440,280" stroke="white" strokeWidth="1" opacity="0.6"/>
+          </svg>
+        </div>
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto flex flex-col items-center justify-center h-full">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 uppercase tracking-wider italic">
+            DAFTAR LAPANGAN {sportFilter ? sportFilter.toUpperCase() : "OLAHRAGA"}
+          </h1>
+          <p className="text-white/90 text-sm md:text-base font-medium max-w-2xl">
+            Informasi semua jadwal lapangan olahraga yang telah terdaftar dan dapat di-booking melalui website SM Sport Center.
+          </p>
+        </div>
+      </div>
 
-        {/* Calendar Grid */}
+      <div className="px-4 sm:px-6 lg:px-8">
+        <FilterBar className="-mt-12 mb-10 relative z-20 max-w-7xl mx-auto" />
+        <div className="max-w-7xl mx-auto">
+          {/* Calendar Grid */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
           {loading ? (
             <div className="p-20 text-center text-gray-500">
@@ -317,6 +338,7 @@ function BookingContent() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
