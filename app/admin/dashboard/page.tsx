@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { konfirmasiPelunasanCash } from "@/app/actions/payment";
+import DashboardCharts from "./DashboardCharts";
 
 export default async function AdminDashboardPage() {
   // Ambil metrik dasar
@@ -20,6 +21,61 @@ export default async function AdminDashboardPage() {
   const pendingPayments = await prisma.payment.count({
     where: { paymentStatus: "PENDING" }
   });
+
+  // Ambil semua booking valid untuk chart (Proporsi & per Lapangan)
+  const validBookings = await prisma.booking.findMany({
+    where: { status: { in: ["PAID", "PAID_DP", "PENDING"] } },
+    include: { court: true }
+  });
+
+  const courtTypeMap = { Futsal: 0, Badminton: 0 };
+  const courtBookingMap: Record<string, number> = {};
+  
+  validBookings.forEach(b => {
+    if (b.court.type === "FUTSAL") courtTypeMap.Futsal += 1;
+    else if (b.court.type === "BADMINTON") courtTypeMap.Badminton += 1;
+
+    courtBookingMap[b.court.name] = (courtBookingMap[b.court.name] || 0) + 1;
+  });
+
+  const courtTypeData = [
+    { name: "Futsal", value: courtTypeMap.Futsal },
+    { name: "Badminton", value: courtTypeMap.Badminton }
+  ];
+
+  const courtBookingData = Object.entries(courtBookingMap)
+    .map(([name, bookings]) => ({ name, bookings }))
+    .sort((a, b) => b.bookings - a.bookings);
+
+  // Data Trend (7 Hari Terakhir)
+  const trendDataMap: Record<string, number> = {};
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = format(d, "dd MMM", { locale: id });
+    trendDataMap[dateStr] = 0;
+  }
+
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const recentTrendBookings = await prisma.booking.findMany({
+    where: {
+      bookingDate: { gte: sevenDaysAgo },
+      status: { in: ["PAID", "PAID_DP", "PENDING"] }
+    }
+  });
+
+  recentTrendBookings.forEach(b => {
+    const dateStr = format(b.bookingDate, "dd MMM", { locale: id });
+    if (trendDataMap[dateStr] !== undefined) {
+      trendDataMap[dateStr] += 1;
+    }
+  });
+
+  const trendData = Object.entries(trendDataMap).map(([date, bookings]) => ({ date, bookings }));
 
   // Ambil 5 booking terbaru
   const recentBookings = await prisma.booking.findMany({
@@ -59,6 +115,13 @@ export default async function AdminDashboardPage() {
           <span className="text-xs text-gray-400 mt-1">Pembayaran perlu dicek</span>
         </div>
       </div>
+
+      {/* Render Charts */}
+      <DashboardCharts 
+        courtTypeData={courtTypeData}
+        courtBookingData={courtBookingData}
+        trendData={trendData}
+      />
 
       {/* Tabel Booking Terbaru */}
       <h2 className="text-xl font-bold text-gray-900 mb-4">5 Reservasi Terbaru</h2>
