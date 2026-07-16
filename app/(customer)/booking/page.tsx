@@ -59,6 +59,7 @@ function BookingContent() {
   const [qrisUrl, setQrisUrl] = useState<string>("");
 
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [duration, setDuration] = useState<number>(1);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 10000);
@@ -168,9 +169,26 @@ function BookingContent() {
     const status = getSlotStatus(court.id, time);
     if (status === "AVAILABLE") {
       setSelectedSlot({ court, time });
+      setDuration(1);
       setMessage(null);
       setPendingBookingId(null);
     }
+  };
+
+  const isDurationAvailable = (startHour: string, dur: number) => {
+    if (!selectedSlot) return false;
+    const baseHour = parseInt(startHour.split(":")[0]);
+    if (baseHour + dur > 24) return false;
+    
+    for (let i = 0; i < dur; i++) {
+      const h = baseHour + i;
+      const t = `${h.toString().padStart(2, "0")}:00`;
+      const status = getSlotStatus(selectedSlot.court.id, t);
+      if (status !== "AVAILABLE") {
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleConfirmBooking = async () => {
@@ -182,7 +200,7 @@ function BookingContent() {
       selectedSlot.court.id,
       selectedDate,
       selectedSlot.time,
-      1,
+      duration,
       paymentType
     );
 
@@ -379,15 +397,33 @@ function BookingContent() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-500 text-sm font-medium">Waktu</span>
                       <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm">
-                        {selectedSlot.time} - {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
+                        {selectedSlot.time} - {`${(parseInt(selectedSlot.time.split(":")[0]) + duration).toString().padStart(2, "0")}:00`}
                       </span>
                     </div>
                     <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                      <span className="text-gray-500 text-sm font-medium">Harga Normal</span>
+                      <span className="text-gray-500 text-sm font-medium">Harga per Jam</span>
                       <span className="font-bold text-gray-900">
                         Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
                       </span>
                     </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-3">Durasi Bermain</label>
+                    <select
+                      value={duration}
+                      onChange={(e) => setDuration(parseInt(e.target.value))}
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-gray-900"
+                    >
+                      <option value={1}>1 Jam</option>
+                      <option value={2}>2 Jam</option>
+                      <option value={3}>3 Jam</option>
+                    </select>
+                    {!isDurationAvailable(selectedSlot.time, duration) && (
+                      <p className="text-red-600 text-xs font-bold mt-2 bg-red-50 p-2 rounded-lg border border-red-100">
+                        Maaf, durasi {duration} jam tidak tersedia karena slot waktu berikutnya sudah dipesan atau tutup.
+                      </p>
+                    )}
                   </div>
                   
                   <div>
@@ -442,7 +478,7 @@ function BookingContent() {
                     <div>
                       <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Total Tagihan</div>
                       <div className="text-2xl font-black text-gray-900">
-                        Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
+                        Rp {(paymentType === "DP_50" ? (selectedSlot.court.pricePerHour * duration) / 2 : (selectedSlot.court.pricePerHour * duration)).toLocaleString("id-ID")}
                       </div>
                     </div>
                   </div>
@@ -472,7 +508,7 @@ function BookingContent() {
               {!pendingBookingId ? (
                 <button
                   onClick={handleConfirmBooking}
-                  disabled={isBooking}
+                  disabled={isBooking || !isDurationAvailable(selectedSlot.time, duration)}
                   className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
                 >
                   {isBooking ? (
