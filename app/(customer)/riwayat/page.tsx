@@ -66,63 +66,50 @@ export default async function RiwayatPage() {
               const amountToPay = booking.status === "PAID_DP" ? (booking.totalPrice - booking.paidAmount) : booking.totalPrice / 2; // Simplification, depends on your actual logic
 
               return (
-                <div key={booking.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-6">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 mb-3">
-                      <h3 className="text-xl font-bold text-gray-900">{booking.court.name}</h3>
-                      {booking.status === "PENDING" && <span className="bg-orange-100 text-orange-700 text-xs px-2.5 py-1 rounded-full font-bold">Menunggu Pembayaran</span>}
-                      {booking.status === "PAID_DP" && <span className="bg-blue-100 text-blue-700 text-xs px-2.5 py-1 rounded-full font-bold">DP 50%</span>}
-                      {booking.status === "PAID" && <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-bold">LUNAS</span>}
-                      {booking.status === "CANCELLED" && <span className="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-bold">DIBATALKAN</span>}
+                <div key={booking.id} className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 truncate">{booking.court.name}</h3>
+                      {booking.status === "PENDING" && <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Menunggu Pembayaran</span>}
+                      {booking.status === "PAID_DP" && <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">DP 50%</span>}
+                      {booking.status === "PAID" && <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">LUNAS</span>}
+                      {booking.status === "CANCELLED" && <span className="bg-red-50 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold border border-red-100 uppercase">Dibatalkan</span>}
                     </div>
                     
-                    <div className="text-gray-600 space-y-1.5 text-sm">
-                      <p className="flex items-center gap-2">
+                    <div className="text-gray-500 flex flex-wrap items-center gap-4 text-sm">
+                      <p className="flex items-center gap-1.5 whitespace-nowrap">
                         <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        {format(new Date(booking.bookingDate), "dd MMMM yyyy", { locale: id })}
+                        {format(new Date(booking.bookingDate), "dd MMM yyyy", { locale: id })}
                       </p>
-                      <p className="flex items-center gap-2">
+                      <p className="flex items-center gap-1.5 whitespace-nowrap">
                         <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         {booking.startTime.toISOString().substring(11, 16)} - {booking.endTime.toISOString().substring(11, 16)}
                       </p>
-                      <p className="font-bold text-blue-600 mt-3 text-base">
-                        Total Tagihan: Rp {booking.totalPrice.toLocaleString("id-ID")}
+                      <p className="font-bold text-blue-600 text-sm whitespace-nowrap">
+                        Rp {booking.totalPrice.toLocaleString("id-ID")}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-center min-w-[280px]">
+                  <div className="w-full md:w-auto flex-shrink-0 flex flex-col md:flex-row items-center gap-3">
                     {isPendingActive && (
-                      <div className="flex flex-col space-y-3">
-                        <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-200">
-                          <p className="text-sm text-orange-800 leading-relaxed">
-                            <span className="font-bold block mb-1">⏳ Batas Waktu Pembayaran:</span>
-                            <span className="font-black text-lg">{format(expiresAt, "HH:mm")} WIB</span><br/>
-                            Pesanan otomatis dibatalkan jika melewati batas waktu ini.
-                          </p>
+                      <>
+                        <div className="bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 text-xs text-orange-800 text-center w-full md:w-auto">
+                          <span className="font-bold whitespace-nowrap">⏳ Batas: {format(expiresAt, "HH:mm")} WIB</span>
                         </div>
-                        <ResumeQrisButton 
-                          bookingId={booking.id} 
-                          amount={booking.totalPrice / 2} // Assuming they only pay DP here initially based on current flow
-                          paymentType="DP_50" 
-                        />
-                      </div>
+                        <div className="w-full md:w-auto">
+                          <ResumeQrisButton 
+                            bookingId={booking.id} 
+                            amount={booking.totalPrice / 2} 
+                            paymentType="DP_50" 
+                          />
+                        </div>
+                      </>
                     )}
                     
                     {booking.status === "PAID_DP" && (
-                      <div className="bg-blue-50 text-blue-700 p-4 rounded-xl text-sm text-center border border-blue-100 font-medium h-full flex items-center justify-center">
-                        Sisa pelunasan Rp {(booking.totalPrice - booking.paidAmount).toLocaleString("id-ID")} dibayarkan langsung di lokasi (Kasir).
-                      </div>
-                    )}
-
-                    {(booking.status === "PAID" || booking.status === "PAID_DP") && (
-                      // We removed "Unduh Tiket" here as requested!
-                      <div className="hidden"></div>
-                    )}
-
-                    {booking.status === "CANCELLED" && (
-                      <div className="bg-gray-50 text-gray-500 p-4 rounded-xl text-sm text-center border border-gray-200 font-medium h-full flex items-center justify-center">
-                        Pesanan ini telah dibatalkan karena melewati batas waktu pembayaran atau dibatalkan oleh admin.
+                      <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-xs font-medium border border-blue-100 text-center w-full md:w-auto">
+                        Sisa Rp {(booking.totalPrice - booking.paidAmount).toLocaleString("id-ID")} di lokasi
                       </div>
                     )}
                   </div>
