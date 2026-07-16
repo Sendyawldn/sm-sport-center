@@ -6,17 +6,12 @@ import { revalidatePath } from "next/cache";
 
 export async function simulateQrisPayment(bookingId: string, paymentType: "DP_50" | "FULL_100") {
   try {
-    const session = await getSession();
-    if (!session) {
-      return { error: "Sesi tidak valid. Silakan login ulang." };
-    }
-
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId }
     });
 
-    if (!booking || booking.userId !== session.id) {
-      return { error: "Booking tidak ditemukan atau bukan milik Anda." };
+    if (!booking) {
+      return { error: "Booking tidak ditemukan." };
     }
 
     if (booking.status !== "PENDING") {
