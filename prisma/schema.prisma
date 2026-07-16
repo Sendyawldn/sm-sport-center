@@ -21,6 +21,11 @@ enum CourtStatus {
   MAINTENANCE
 }
 
+enum BookingSource {
+  ONLINE
+  OFFLINE_CASHIER
+}
+
 enum BookingStatus {
   PENDING
   PAID_DP
@@ -75,8 +80,11 @@ model Booking {
   totalPrice  Int           @map("total_price")
   paymentType PaymentType   @default(FULL_100) @map("payment_type")
   paidAmount  Int           @default(0) @map("paid_amount")
-  status      BookingStatus @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
+  status        BookingStatus @default(PENDING)
+  bookingSource BookingSource @default(ONLINE) @map("booking_source")
+  guestName     String?       @map("guest_name")
+  guestPhone    String?       @map("guest_phone")
+  createdAt     DateTime      @default(now()) @map("created_at")
 
   user        User          @relation(fields: [userId], references: [id])
   court       Court         @relation(fields: [courtId], references: [id])
