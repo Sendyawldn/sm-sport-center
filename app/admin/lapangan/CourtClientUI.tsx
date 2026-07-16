@@ -112,7 +112,7 @@ export default function CourtClientUI({ initialCourts }: { initialCourts: Court[
                             step="1000"
                             value={editPrice}
                             onChange={(e) => setEditPrice(parseInt(e.target.value) || 0)}
-                            className="border border-gray-300 rounded-lg px-3 py-1.5 w-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="border border-gray-300 rounded-lg px-3 py-1.5 w-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-bold bg-white"
                             disabled={isLoading}
                           />
                         </div>
@@ -127,7 +127,7 @@ export default function CourtClientUI({ initialCourts }: { initialCourts: Court[
                         <select
                           value={editStatus}
                           onChange={(e) => setEditStatus(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-medium"
+                          className="border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white font-bold text-gray-900"
                           disabled={isLoading}
                         >
                           <option value="AVAILABLE">Tersedia</option>
