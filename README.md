@@ -20,10 +20,12 @@
 ## ✨ Fitur Utama
 
 - **📅 Real-Time Booking System:** Pesan jadwal lapangan Futsal & Badminton tanpa bentrok.
+- **⏱️ Pilihan Durasi Fleksibel:** Pengguna dapat memilih durasi bermain (1, 2, atau 3 jam) secara dinamis.
 - **🔒 Anti Double-Booking:** Validasi ganda di frontend dan backend menggunakan transaksi database ACID untuk memastikan jadwal aman.
-- **⏳ Auto-Cancel Cron:** Pesanan dibatalkan otomatis jika melewati batas waktu tunggu pembayaran (15 menit).
+- **⏳ Auto-Cancel Cron (Lazy Expiration):** Pesanan dibatalkan otomatis jika melewati batas waktu tunggu pembayaran (15 menit).
+- **💳 Pembayaran QRIS Dinamis:** Pop-up modal QRIS cerdas yang terintegrasi langsung di Riwayat Pesanan dengan polling status otomatis.
 - **🛡️ Autentikasi Pengguna:** Login dan Registrasi berbasis Session JWT untuk Admin & Pelanggan.
-- **👑 Dasbor Admin Terpadu:** Validasi dan konfirmasi pembayaran manual, pengaturan lapangan, dan laporan.
+- **👑 Dasbor Admin Terpadu:** Modul lengkap mencakup validasi pembayaran, statistik pendapatan, ekspor laporan, dan **Manajemen Lapangan** (Ubah harga & status ketersediaan secara langsung).
 - **📱 Responsif:** Tampilan UI ramah pengguna baik dari ponsel maupun desktop.
 
 ## 🛠️ Teknologi yang Digunakan
