@@ -30,6 +30,9 @@ export default async function AdminLayout({
           <Link href="/admin/laporan" className="block px-4 py-3 rounded-xl hover:bg-gray-800 transition-colors text-gray-300">
             📈 Laporan Ekspor
           </Link>
+          <Link href="/admin/lapangan" className="block px-4 py-3 rounded-xl hover:bg-gray-800 transition-colors text-gray-300">
+            🎾 Manajemen Lapangan
+          </Link>
         </nav>
         <div className="p-4 border-t border-gray-800 text-sm text-gray-400">
           Masuk sebagai <br />

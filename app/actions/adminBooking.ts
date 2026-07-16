@@ -150,3 +150,45 @@ export async function createOfflineBooking(params: OfflineBookingParams) {
     return { error: `Terjadi kesalahan: ${error.message || String(error)}` };
   }
 }
+
+export async function processPelunasan(bookingId: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") {
+      return { error: "Akses ditolak." };
+    }
+
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) return { error: "Booking tidak ditemukan." };
+    if (booking.status !== "PAID_DP") return { error: "Booking tidak dalam status DP." };
+
+    const remaining = booking.totalPrice - booking.paidAmount;
+
+    await prisma.$transaction(async (tx: any) => {
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: "PAID",
+          paidAmount: booking.totalPrice,
+        }
+      });
+
+      // Update existing payment record to full amount
+      await tx.payment.update({
+        where: { bookingId: bookingId },
+        data: {
+          amount: booking.totalPrice,
+          paymentStatus: "PAID",
+          paidAt: new Date(),
+        }
+      });
+    });
+
+    revalidatePath("/admin/reservasi");
+    revalidatePath("/admin/dashboard");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Pelunasan error:", error);
+    return { error: `Terjadi kesalahan: ${error.message || String(error)}` };
+  }
+}

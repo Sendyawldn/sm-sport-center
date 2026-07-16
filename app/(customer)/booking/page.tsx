@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBooking } from "@/app/actions/booking";
-import { simulateQrisPayment } from "@/app/actions/payment";
+
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { format, parseISO } from "date-fns";
 import FilterBar from "@/components/FilterBar";
@@ -55,6 +55,9 @@ function BookingContent() {
     type: "error" | "success";
   } | null>(null);
 
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
+  const [qrisUrl, setQrisUrl] = useState<string>("");
+
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -67,6 +70,34 @@ function BookingContent() {
     const hour = i + 8;
     return `${hour.toString().padStart(2, "0")}:00`;
   });
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (pendingBookingId) {
+      const paymentUrl = `${window.location.protocol}//${window.location.host}/pay/${pendingBookingId}`;
+      setQrisUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(paymentUrl)}`);
+
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/bookings/${pendingBookingId}/status`);
+          const data = await res.json();
+          if (data.status === "PAID" || data.status === "PAID_DP") {
+            clearInterval(interval);
+            setMessage({
+              text: "Pembayaran berhasil! Mengalihkan...",
+              type: "success",
+            });
+            setTimeout(() => {
+              router.push("/riwayat");
+            }, 1500);
+          }
+        } catch (e) {
+          console.error("Polling error", e);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [pendingBookingId, router]);
 
   useEffect(() => {
     if (dateFilter) {
@@ -138,6 +169,7 @@ function BookingContent() {
     if (status === "AVAILABLE") {
       setSelectedSlot({ court, time });
       setMessage(null);
+      setPendingBookingId(null);
     }
   };
 
@@ -154,27 +186,15 @@ function BookingContent() {
       paymentType
     );
 
+    setIsBooking(false);
+
     if (res.error) {
-      setIsBooking(false);
       setMessage({ text: res.error, type: "error" });
       return;
     }
 
     if (res.bookingId) {
-      const qrisRes = await simulateQrisPayment(res.bookingId, paymentType);
-      setIsBooking(false);
-      
-      if (qrisRes.error) {
-        setMessage({ text: qrisRes.error, type: "error" });
-      } else {
-        setMessage({
-          text: "Pembayaran berhasil! Mengalihkan...",
-          type: "success",
-        });
-        setTimeout(() => {
-          router.push("/riwayat");
-        }, 1500);
-      }
+      setPendingBookingId(res.bookingId);
     }
   };
 
@@ -321,6 +341,7 @@ function BookingContent() {
                 onClick={() => {
                   setSelectedSlot(null);
                   setMessage(null);
+                  setPendingBookingId(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
               >
@@ -343,119 +364,145 @@ function BookingContent() {
                 </div>
               )}
 
-              {/* Order Info Card */}
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm font-medium">Lapangan</span>
-                  <span className="font-bold text-gray-900">{selectedSlot.court.name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm font-medium">Tanggal</span>
-                  <span className="font-bold text-gray-900">{format(parseISO(selectedDate), "dd MMMM yyyy")}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm font-medium">Waktu</span>
-                  <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm">
-                    {selectedSlot.time} - {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
-                  </span>
-                </div>
-                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                  <span className="text-gray-500 text-sm font-medium">Harga Normal</span>
-                  <span className="font-bold text-gray-900">
-                    Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
-                  </span>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold text-gray-800 mb-3">Metode Pembayaran</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("DP_50")}
-                    className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
-                      paymentType === "DP_50" 
-                        ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
-                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {paymentType === "DP_50" && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                    <div className="font-bold text-gray-900 text-sm">DP 50%</div>
-                    <div className="text-[11px] text-gray-500 mt-1 leading-snug">Sisa dilunasi di lokasi</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType("FULL_100")}
-                    className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
-                      paymentType === "FULL_100" 
-                        ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
-                        : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {paymentType === "FULL_100" && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                    <div className="font-bold text-gray-900 text-sm">Lunas 100%</div>
-                    <div className="text-[11px] text-gray-500 mt-1 leading-snug">Bayar penuh sekarang</div>
-                  </button>
-                </div>
-              </div>
+              {!pendingBookingId ? (
+                <>
+                  {/* Order Info Card */}
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm font-medium">Lapangan</span>
+                      <span className="font-bold text-gray-900">{selectedSlot.court.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm font-medium">Tanggal</span>
+                      <span className="font-bold text-gray-900">{format(parseISO(selectedDate), "dd MMMM yyyy")}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm font-medium">Waktu</span>
+                      <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-sm">
+                        {selectedSlot.time} - {`${parseInt(selectedSlot.time.split(":")[0]) + 1}:00`}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                      <span className="text-gray-500 text-sm font-medium">Harga Normal</span>
+                      <span className="font-bold text-gray-900">
+                        Rp {selectedSlot.court.pricePerHour.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-3">Metode Pembayaran</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentType("DP_50")}
+                        className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
+                          paymentType === "DP_50" 
+                            ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
+                            : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {paymentType === "DP_50" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                        <div className="font-bold text-gray-900 text-sm">DP 50%</div>
+                        <div className="text-[11px] text-gray-500 mt-1 leading-snug">Sisa dilunasi di lokasi</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentType("FULL_100")}
+                        className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
+                          paymentType === "FULL_100" 
+                            ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-sm" 
+                            : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {paymentType === "FULL_100" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                        <div className="font-bold text-gray-900 text-sm">Lunas 100%</div>
+                        <div className="text-[11px] text-gray-500 mt-1 leading-snug">Bayar penuh sekarang</div>
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="bg-blue-600/5 rounded-2xl border border-blue-100 p-4 flex justify-between items-center">
-                <div>
-                  <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Total Tagihan</div>
-                  <div className="text-2xl font-black text-gray-900">
-                    Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
+                  <div className="bg-blue-600/5 rounded-2xl border border-blue-100 p-4 flex justify-between items-center">
+                    <div>
+                      <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Total Tagihan</div>
+                      <div className="text-2xl font-black text-gray-900">
+                        Rp {(paymentType === "DP_50" ? selectedSlot.court.pricePerHour / 2 : selectedSlot.court.pricePerHour).toLocaleString("id-ID")}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 space-y-4 text-center">
+                  <h4 className="text-lg font-bold text-gray-900">Scan QR untuk Membayar</h4>
+                  <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                    {qrisUrl && <img src={qrisUrl} alt="QRIS" className="w-48 h-48" />}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Gunakan kamera HP Anda untuk scan QR code ini.
+                    Halaman ini otomatis tertutup jika pembayaran di HP berhasil.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-blue-600 text-sm font-semibold animate-pulse mt-4">
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Menunggu pembayaran di HP Anda...
                   </div>
                 </div>
-                <div className="h-16 w-16 bg-white rounded-xl shadow-sm border border-gray-100 p-1 flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SIMULASI_QRIS_SM_SPORT_${selectedSlot.court.id}`} 
-                    alt="QR" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
+              )}
             </div>
 
             <div className="p-5 border-t border-gray-100 bg-white">
-              <button
-                onClick={handleConfirmBooking}
-                disabled={isBooking}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
-              >
-                {isBooking ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
-                    Simulasi Bayar QRIS
-                  </>
-                )}
-              </button>
+              {!pendingBookingId ? (
+                <button
+                  onClick={handleConfirmBooking}
+                  disabled={isBooking}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
+                >
+                  {isBooking ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                      Dapatkan QRIS Pembayaran
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSelectedSlot(null);
+                    setPendingBookingId(null);
+                  }}
+                  className="w-full py-3 text-gray-500 font-semibold hover:bg-gray-50 rounded-xl transition-colors border border-gray-200"
+                >
+                  Batal / Tutup
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createOfflineBooking } from "@/app/actions/adminBooking";
+import { createOfflineBooking, processPelunasan } from "@/app/actions/adminBooking";
 import { format, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 
@@ -58,6 +58,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
   }, []);
 
   const [selectedSlot, setSelectedSlot] = useState<{ court: Court; time: string } | null>(null);
+  const [pelunasanSlot, setPelunasanSlot] = useState<{ booking: Booking; court: Court } | null>(null);
 
   // Form State
   const [guestName, setGuestName] = useState("");
@@ -99,14 +100,36 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
   };
 
   const handleCellClick = (court: Court, time: string, status: string) => {
-    if (status !== "AVAILABLE") return; 
-    setSelectedSlot({ court, time });
-    
-    // Reset form
-    setGuestName("");
-    setGuestPhone("");
-    setPaymentType("FULL_100");
-    setPaymentMethod("CASH");
+    if (status === "AVAILABLE") {
+      setSelectedSlot({ court, time });
+      
+      // Reset form
+      setGuestName("");
+      setGuestPhone("");
+      setPaymentType("FULL_100");
+      setPaymentMethod("CASH");
+    } else if (status === "BOOKED") {
+      const bData = getBookingData(court.id, time);
+      if (bData && bData.paymentType === "DP_50" && bData.status === "PAID_DP") {
+        setPelunasanSlot({ booking: bData, court });
+      }
+    }
+  };
+
+  const handlePelunasan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pelunasanSlot) return;
+
+    setLoading(true);
+    const res = await processPelunasan(pelunasanSlot.booking.id);
+    setLoading(false);
+
+    if (res.error) {
+      alert(res.error);
+    } else {
+      alert("Pelunasan berhasil diproses!");
+      setPelunasanSlot(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -245,8 +268,12 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                         label = "Kosong";
                       } else if (status === "BOOKED") {
                         bData = getBookingData(court.id, hour);
-                        const isDP = bData?.paymentType === "DP_50";
-                        btnStyle = `bg-red-50 text-red-700 border-red-200 shadow-sm cursor-not-allowed ${isDP ? 'border-l-4 border-l-red-500' : ''}`;
+                        const isDP = bData?.paymentType === "DP_50" && bData?.status === "PAID_DP";
+                        if (isDP) {
+                          btnStyle = "bg-yellow-50 text-yellow-700 border-yellow-200 shadow-sm cursor-pointer hover:bg-yellow-100";
+                        } else {
+                          btnStyle = "bg-red-50 text-red-700 border-red-200 shadow-sm cursor-not-allowed";
+                        }
                         label = bData?.guestName || "Penuh";
                       } else if (status === "PAST") {
                         btnStyle = "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through";
@@ -256,7 +283,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                       return (
                         <button
                           key={`${court.id}-${hour}`}
-                          disabled={status !== "AVAILABLE"}
+                          disabled={status !== "AVAILABLE" && !(status === "BOOKED" && bData?.paymentType === "DP_50" && bData?.status === "PAID_DP")}
                           onClick={() => handleCellClick(court, hour, status)}
                           className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all duration-200 ${btnStyle} relative group`}
                         >
@@ -391,6 +418,61 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                   {loading ? "Menyimpan..." : "💾 Simpan & Kunci Jadwal"}
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pelunasan */}
+      {pelunasanSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">Terima Pelunasan</h3>
+              <button 
+                onClick={() => setPelunasanSlot(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-light leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <form onSubmit={handlePelunasan} className="p-6">
+              <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-xl mb-6 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-yellow-700">Pelanggan:</span>
+                  <span className="font-bold text-yellow-900">{pelunasanSlot.booking.guestName}</span>
+                  <span className="text-yellow-700">Lapangan:</span>
+                  <span className="font-bold text-yellow-900">{pelunasanSlot.court.name}</span>
+                  <span className="text-yellow-700">Jam Mulai:</span>
+                  <span className="font-bold text-yellow-900">{pelunasanSlot.booking.startTime.substring(11, 16)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">Harga Total:</span>
+                  <span className="font-medium text-gray-900">Rp {pelunasanSlot.court.pricePerHour.toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-4">
+                  <span className="text-gray-500">Sudah Dibayar (DP):</span>
+                  <span className="font-medium text-green-600">- Rp {(pelunasanSlot.court.pricePerHour / 2).toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-gray-900 font-bold">Sisa Tagihan:</span>
+                  <span className="text-2xl font-black text-red-600">
+                    Rp {(pelunasanSlot.court.pricePerHour / 2).toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? "Memproses..." : "✅ Terima Pelunasan & Lunas"}
+              </button>
             </form>
           </div>
         </div>
