@@ -564,14 +564,8 @@ export default function LandingPage() {
               </h4>
               <ul className="space-y-4">
                 <li className="flex justify-between items-center text-gray-600 border-b border-gray-100 pb-3">
-                  <span className="font-medium">Senin - Jumat</span>
+                  <span className="font-medium">Senin - Minggu</span>
                   <span className="text-gray-900 font-bold">08:00 - 23:00</span>
-                </li>
-                <li className="flex justify-between items-center text-gray-600 border-b border-gray-100 pb-3">
-                  <span className="font-medium">Sabtu - Minggu</span>
-                  <span className="text-[#a6192e] font-bold">
-                    06:00 - 24:00
-                  </span>
                 </li>
               </ul>
             </div>
