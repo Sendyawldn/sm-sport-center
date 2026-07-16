@@ -104,3 +104,69 @@ export async function konfirmasiPelunasanCash(bookingId: string) {
     return { error: "Gagal memproses pelunasan cash." };
   }
 }
+
+export async function verifyPayment(paymentId: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") return { error: "Akses ditolak." };
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { booking: true }
+    });
+
+    if (!payment) return { error: "Pembayaran tidak ditemukan." };
+
+    await prisma.$transaction(async (tx: any) => {
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { paymentStatus: "PAID" }
+      });
+      await tx.booking.update({
+        where: { id: payment.bookingId },
+        data: { status: "PAID" }
+      });
+    });
+
+    revalidatePath("/admin/pembayaran");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/booking");
+    revalidatePath("/riwayat");
+    return { success: true };
+  } catch (error) {
+    return { error: "Terjadi kesalahan saat memverifikasi pembayaran." };
+  }
+}
+
+export async function rejectPayment(paymentId: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") return { error: "Akses ditolak." };
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { booking: true }
+    });
+
+    if (!payment) return { error: "Pembayaran tidak ditemukan." };
+
+    await prisma.$transaction(async (tx: any) => {
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { paymentStatus: "FAILED" }
+      });
+      await tx.booking.update({
+        where: { id: payment.bookingId },
+        data: { status: "CANCELLED" }
+      });
+    });
+
+    revalidatePath("/admin/pembayaran");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/booking");
+    revalidatePath("/riwayat");
+    return { success: true };
+  } catch (error) {
+    return { error: "Terjadi kesalahan saat menolak pembayaran." };
+  }
+}
