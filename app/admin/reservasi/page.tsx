@@ -6,9 +6,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminReservasiPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const dateStr = (searchParams?.date as string) || new Date().toISOString().split("T")[0];
+  const params = await searchParams;
+  const dateStr = (params?.date as string) || new Date().toISOString().split("T")[0];
   
   const startDate = new Date(`${dateStr}T00:00:00.000Z`);
   const endDate = new Date(`${dateStr}T23:59:59.999Z`);

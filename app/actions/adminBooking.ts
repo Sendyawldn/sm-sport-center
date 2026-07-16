@@ -147,6 +147,6 @@ export async function createOfflineBooking(params: OfflineBookingParams) {
       return { error: error.message };
     }
     console.error("Offline Booking error:", error);
-    return { error: "Terjadi kesalahan sistem saat memproses booking offline." };
+    return { error: `Terjadi kesalahan: ${error.message || String(error)}` };
   }
 }
