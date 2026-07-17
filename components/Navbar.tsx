@@ -17,6 +17,7 @@ export default function Navbar({ session, user }: { session: any, user?: any }) 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Helper to determine active link styles
   const getLinkClasses = (path: string) => {
@@ -34,7 +35,7 @@ export default function Navbar({ session, user }: { session: any, user?: any }) 
             <div className="w-10 h-10 flex items-center justify-center">
               <span className="font-extrabold text-3xl italic text-[#991b1b] tracking-tighter">SM</span>
             </div>
-            <Link href="/" className="font-bold text-xl tracking-tight text-gray-900 hidden sm:block">Sport Center</Link>
+            <Link href="/" className="font-bold text-xl tracking-tight text-gray-900">Sport Center</Link>
           </div>
           
           <div className="hidden md:flex space-x-8">
@@ -101,12 +102,61 @@ export default function Navbar({ session, user }: { session: any, user?: any }) 
           </div>
 
           <div className="md:hidden flex items-center">
-            <button className="text-gray-900 hover:opacity-70 transition-opacity">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-900 hover:opacity-70 transition-opacity"
+            >
               <MenuIcon className="w-7 h-7" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-lg py-4 px-4 flex flex-col gap-4">
+          <Link href="/" className={getLinkClasses("/")} onClick={() => setIsMobileMenuOpen(false)}>Beranda</Link>
+          <Link href="/booking" className={getLinkClasses("/booking")} onClick={() => setIsMobileMenuOpen(false)}>Jadwal & Booking</Link>
+          {session && (
+            <Link href="/riwayat" className={getLinkClasses("/riwayat")} onClick={() => setIsMobileMenuOpen(false)}>
+              Riwayat Pesanan
+            </Link>
+          )}
+          
+          <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
+            {!session ? (
+              <>
+                <button 
+                  onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="text-gray-600 font-medium py-2 text-left w-full"
+                >
+                  Masuk
+                </button>
+                <button 
+                  onClick={() => { setAuthMode("register"); setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="bg-[#991b1b] text-white font-bold py-2.5 rounded-md text-center w-full"
+                >
+                  Daftar
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="font-bold text-gray-900 py-2 px-1">
+                  {user?.name ? user.name : "Akun Saya"}
+                </div>
+                <form action={logout}>
+                  <button 
+                    type="submit" 
+                    className="w-full text-left py-2 px-1 font-semibold text-red-600 flex items-center gap-2"
+                  >
+                    Keluar
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {isAuthModalOpen && (
         <AuthModal 

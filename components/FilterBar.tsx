@@ -35,10 +35,10 @@ function FilterBarContent({ className }: { className: string }) {
       <div className="bg-[#a6192e] rounded-xl shadow-xl w-full relative z-50">
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 gap-4 md:gap-0">
           
-          <div className="flex flex-1 items-center justify-between w-full">
+          <div className="flex flex-col md:flex-row flex-1 items-start md:items-center justify-between w-full gap-4 md:gap-0">
             {/* Cabang Olahraga */}
             <div 
-              className="flex-1 flex items-center gap-4 relative cursor-pointer group px-2"
+              className="w-full md:flex-1 flex items-center gap-4 relative cursor-pointer group px-2"
               onClick={() => setSportOpen(!sportOpen)}
             >
               <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center shrink-0">
@@ -66,9 +66,10 @@ function FilterBarContent({ className }: { className: string }) {
             </div>
 
             <div className="hidden md:block w-[1px] h-10 bg-white/20 mx-2"></div>
+            <div className="block md:hidden w-full h-[1px] bg-white/20 my-1"></div>
 
             {/* Tanggal */}
-            <div className="flex-1 flex items-center gap-4 relative cursor-pointer group px-2">
+            <div className="w-full md:flex-1 flex items-center gap-4 relative cursor-pointer group px-2">
               <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center shrink-0">
                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
