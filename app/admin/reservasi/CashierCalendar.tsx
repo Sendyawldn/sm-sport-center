@@ -84,13 +84,13 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
   };
 
   const getSlotStatus = (courtId: string, timeStr: string) => {
-    if (isSlotPast(timeStr)) return "PAST";
+    const booking = bookings.find(b => b.courtId === courtId && b.startTime <= timeStr && b.endTime > timeStr);
+    if (booking) return "BOOKED";
 
     const court = courts.find(c => c.id === courtId);
     if (court?.status === "MAINTENANCE") return "MAINTENANCE";
 
-    const booking = bookings.find(b => b.courtId === courtId && b.startTime <= timeStr && b.endTime > timeStr);
-    if (booking) return "BOOKED";
+    if (isSlotPast(timeStr)) return "PAST";
 
     return "AVAILABLE";
   };
@@ -129,6 +129,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
     } else {
       alert("Pelunasan berhasil diproses!");
       setPelunasanSlot(null);
+      router.refresh();
     }
   };
 
@@ -154,6 +155,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
     } else {
       alert("Reservasi Offline berhasil disimpan!");
       setSelectedSlot(null);
+      router.refresh();
     }
   };
 
@@ -295,8 +297,8 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                           {status === "BOOKED" && bData && (
                             <div className="absolute hidden group-hover:block z-20 bottom-full mb-2 w-32 bg-gray-900 text-white text-xs p-2 rounded shadow-lg text-center left-1/2 -translate-x-1/2">
                               {bData.guestName} <br />
-                              <span className={bData.paymentType === "DP_50" ? "text-blue-300" : "text-green-300"}>
-                                {bData.paymentType === "DP_50" ? "DP 50%" : "LUNAS"}
+                              <span className={bData.status === "PAID_DP" ? "text-blue-300" : "text-green-300"}>
+                                {bData.status === "PAID_DP" ? "DP 50%" : "LUNAS"}
                               </span>
                             </div>
                           )}
@@ -445,7 +447,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                   <span className="text-yellow-700">Lapangan:</span>
                   <span className="font-bold text-yellow-900">{pelunasanSlot.court.name}</span>
                   <span className="text-yellow-700">Jam Mulai:</span>
-                  <span className="font-bold text-yellow-900">{pelunasanSlot.booking.startTime.substring(11, 16)}</span>
+                  <span className="font-bold text-yellow-900">{pelunasanSlot.booking.startTime}</span>
                 </div>
               </div>
 
