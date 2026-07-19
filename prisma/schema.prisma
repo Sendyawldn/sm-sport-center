@@ -85,11 +85,14 @@ model Booking {
   guestName     String?       @map("guest_name")
   guestPhone    String?       @map("guest_phone")
   createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   user        User          @relation(fields: [userId], references: [id])
   court       Court         @relation(fields: [courtId], references: [id])
   payment     Payment?
 
+  @@index([userId])
+  @@index([courtId])
   @@unique([courtId, bookingDate, startTime])
   @@map("bookings")
 }
@@ -101,8 +104,10 @@ model Payment {
   amount        Int
   paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   paidAt        DateTime?     @map("paid_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   booking       Booking       @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId])
   @@map("payments")
 }
