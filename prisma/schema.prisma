@@ -99,7 +99,6 @@ model Payment {
   bookingId     String        @unique @map("booking_id")
   paymentMethod String        @map("payment_method")
   amount        Int
-  proofUrl      String?       @map("proof_url")
   paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   paidAt        DateTime?     @map("paid_at")
 
