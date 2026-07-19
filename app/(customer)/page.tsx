@@ -54,7 +54,7 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full mb-20">
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6">
-            Booking Lapangan Olahraga <br className="hidden md:block" />
+            Reservasi Lapangan Olahraga <br className="hidden md:block" />
             <span className="text-white">Secara Instan</span>
           </h1>
           <p className="text-xl text-white/90 mb-10 max-w-2xl leading-relaxed font-medium">
@@ -196,7 +196,7 @@ export default function LandingPage() {
                   <div className="text-sm font-medium opacity-80">
                     Halo, Kawan
                   </div>
-                  <div className="font-bold text-xl">Booking Lapangan</div>
+                  <div className="font-bold text-xl">Reservasi Lapangan</div>
                 </div>
                 <div className="flex-1 p-5 flex flex-col gap-4 bg-gray-50 overflow-hidden">
                   <div className="w-full h-32 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
@@ -257,7 +257,7 @@ export default function LandingPage() {
                 RESERVASI INSTAN
               </div>
               <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-8 leading-tight">
-                Booking jadwal lapangan hanya dalam ketukan jari.
+                Reservasi jadwal lapangan hanya dalam ketukan jari.
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed mb-10">
                 Tidak perlu lagi repot datang ke lokasi atau antre menelpon
@@ -438,9 +438,9 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-xl text-gray-700 italic relative z-10 leading-relaxed font-medium">
-                "Lapangan terbaik di kota ini! Booking lewat website ini sangat
-                revolusioner. Sangat mudah, cepat, dan transparan. Tidak pernah
-                ada drama jadwal bentrok lagi saat mau main."
+                &quot;Lapangan terbaik di kota ini! Reservasi lewat website ini sangat
+                mudah dan cepat. Sangat mudah, cepat, dan transparan. Tidak pernah
+                ada drama jadwal bentrok lagi saat mau main.&quot;
               </p>
             </div>
           </div>
@@ -462,7 +462,7 @@ export default function LandingPage() {
                   href="/booking"
                   className="bg-white text-[#a6192e] hover:bg-gray-100 font-extrabold py-4 px-10 rounded-full transition-transform hover:scale-105 active:scale-95 shadow-xl text-lg flex items-center gap-2"
                 >
-                  Booking Sekarang
+                  Reservasi Sekarang
                 </Link>
               </div>
             </div>
@@ -501,8 +501,8 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-gray-500 mb-6 leading-relaxed font-medium">
-                Pusat kebugaran dan penyewaan lapangan kelas turnamen. Booking
-                cepat, aman, dan tanpa antre panjang.
+                Pusat kebugaran dan penyewaan lapangan kelas turnamen. Reservasi
+                mudah dan cepat, aman, dan tanpa antre panjang.
               </p>
             </div>
 

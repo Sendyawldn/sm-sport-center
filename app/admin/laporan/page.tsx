@@ -162,7 +162,7 @@ export default async function LaporanPage(props: { searchParams: Promise<{ start
           <div>
             <h2 className="font-extrabold text-gray-900 text-lg">Pratinjau Data Laporan</h2>
             <p className="text-sm text-gray-500 mt-1 font-medium">
-              Menampilkan <span className="text-gray-900 font-bold">{displayBookings.length}</span> dari total <span className="text-gray-900 font-bold">{bookings.length}</span> pesanan yang sesuai filter.
+              Menampilkan <span className="text-gray-900 font-bold">{displayBookings.length}</span> dari total <span className="text-gray-900 font-bold">{bookings.length}</span> reservasi yang sesuai filter.
             </p>
           </div>
           <div className="bg-blue-600 px-6 py-3 rounded-xl text-white shadow-lg shadow-blue-200">

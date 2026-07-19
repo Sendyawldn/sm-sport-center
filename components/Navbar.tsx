@@ -40,10 +40,10 @@ export default function Navbar({ session, user }: { session: any, user?: any }) 
           
           <div className="hidden md:flex space-x-8">
             <Link href="/" className={getLinkClasses("/")}>Beranda</Link>
-            <Link href="/booking" className={getLinkClasses("/booking")}>Jadwal & Booking</Link>
+            <Link href="/booking" className={getLinkClasses("/booking")}>Jadwal & Reservasi</Link>
             {session && (
               <Link href="/riwayat" className={getLinkClasses("/riwayat")}>
-                Riwayat Pesanan
+                Riwayat Reservasi
               </Link>
             )}
           </div>
@@ -116,10 +116,10 @@ export default function Navbar({ session, user }: { session: any, user?: any }) 
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-lg py-4 px-4 flex flex-col gap-4">
           <Link href="/" className={getLinkClasses("/")} onClick={() => setIsMobileMenuOpen(false)}>Beranda</Link>
-          <Link href="/booking" className={getLinkClasses("/booking")} onClick={() => setIsMobileMenuOpen(false)}>Jadwal & Booking</Link>
+          <Link href="/booking" className={getLinkClasses("/booking")} onClick={() => setIsMobileMenuOpen(false)}>Jadwal & Reservasi</Link>
           {session && (
             <Link href="/riwayat" className={getLinkClasses("/riwayat")} onClick={() => setIsMobileMenuOpen(false)}>
-              Riwayat Pesanan
+              Riwayat Reservasi
             </Link>
           )}
           
