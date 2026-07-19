@@ -60,7 +60,6 @@ export default async function RiwayatPage() {
               const isPendingActive = booking.status === "PENDING" && now <= expiresAt.getTime();
 
               // Calculate payment amount dynamically based on payment history or assumed defaults
-              // Assuming DP if missing payment record for now, or you can fetch the initial choice
               // We'll safely fallback to total/2 if it was a DP flow (assuming UI only allowed DP for now)
               const paymentMethod = booking.payment?.[0]?.paymentMethod || "QRIS";
               const amountToPay = booking.status === "PAID_DP" ? (booking.totalPrice - booking.paidAmount) : booking.totalPrice / 2; // Simplification, depends on your actual logic

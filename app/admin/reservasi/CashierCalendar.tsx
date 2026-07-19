@@ -476,6 +476,7 @@ export default function CashierCalendar({ courts, bookings, initialDate }: Cashi
                 {loading ? "Memproses..." : "✅ Terima Pelunasan & Lunas"}
               </button>
             </form>
+
           </div>
         </div>
       )}
